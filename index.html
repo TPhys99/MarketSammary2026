@@ -371,6 +371,8 @@ function valForPage(m,p){
     /* 年初比の基準は前年12月の最終営業日。基準そのものが欠ける場合は採用しない（誤差の原因） */
     return (b&&m.last)? +((m.last/b-1)*100).toFixed(2) : null;
   }
+  /* 未来月（今月より先）は必ず空。データ源に将来日付が混入しても表示しない */
+  if(p.mm && p.mm>MO) return null;
   const bk=(p.mm===1? (p.ym-1)+"-12" : p.ym+"-"+pad2(p.mm-1)), ck=p.ym+"-"+pad2(p.mm);
   let b=m.map[bk];
   if(b===undefined) b=nearBefore(m.map, ck);
