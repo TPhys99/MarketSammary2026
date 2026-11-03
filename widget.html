@@ -19,18 +19,21 @@
 :root{
   --bg:#0d1014; --band:#1a2230; --card:#151a20; --line:#242c36;
   --tx:#e8eef5; --tx2:#8695a6; --accent:#3b82f6; --on-accent:#ffffff;
-  --stripe:rgba(255,255,255,.022);
+  --stripe:rgba(255,255,255,.10);
   --up:#3fb950; --dn:#f85149; --na:#5b6673;
+  --sechd:#22c9e0; --sechd-tx:#d9f7ff; --on-sechd:#04202a;
 }
 @media (prefers-color-scheme:light){
   :root{--bg:#ffffff;--band:#eaf0f8;--card:#f6f8fa;--line:#dfe6ee;
         --tx:#0f151b;--tx2:#5b6a7b;--accent:#1f6feb;--on-accent:#ffffff;
-        --stripe:rgba(0,0,0,.018);
-        --up:#128a3a;--dn:#cf222e;--na:#93a1b0}
+        --stripe:rgba(0,0,0,.065);
+        --up:#128a3a;--dn:#cf222e;--na:#93a1b0;
+        --sechd:#0a5a6e;--sechd-tx:#053a47;--on-sechd:#ffffff}
 }
 html,body{margin:0;padding:0;height:100%}
 body{
   background:var(--bg);color:var(--tx);
+  padding-top:var(--tabh,37px);
   font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
   font-size:13px;line-height:1.3;
   overscroll-behavior:none;-webkit-text-size-adjust:100%;
@@ -38,9 +41,12 @@ body{
 }
 /* ---- タブ ---- */
 #tabs{
-  position:sticky;top:0;z-index:30;display:flex;overflow-x:auto;
+  position:fixed;top:0;left:0;right:0;z-index:60;
+  display:flex;overflow-x:auto;
   background:var(--card);border-bottom:1px solid var(--line);
-  scrollbar-width:none;padding:0 4px;
+  scrollbar-width:none;padding:0 0 0 4px;
+  padding-top:env(safe-area-inset-top,0px);
+  -webkit-overflow-scrolling:touch;
 }
 #tabs::-webkit-scrollbar{display:none}
 #tabs button{
@@ -55,29 +61,71 @@ body{
 #wrap{padding:0 0 8px}
 .wsec{margin:0 0 2px}
 .wsh{
-  position:sticky;top:37px;z-index:20;
+  position:sticky;top:var(--tabh,37px);z-index:20;
   display:flex;align-items:center;gap:8px;
-  background:var(--band);
-  border-top:1px solid var(--line);
-  border-bottom:1px solid var(--line);
-  padding:10px 10px 9px;
-  color:var(--tx);
-  font-size:15px;font-weight:800;letter-spacing:.01em;
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--sechd) 22%,var(--band)) 0%,
+    color-mix(in srgb,var(--sechd) 8%,var(--band)) 55%,
+    var(--band) 100%);
+  border-top:1px solid color-mix(in srgb,var(--sechd) 45%,var(--line));
+  border-bottom:1px solid color-mix(in srgb,var(--sechd) 38%,var(--line));
+  border-left:4px solid var(--sechd);
+  padding:10px 13px 9px 8px;
+  color:var(--sechd-tx);
+  font-size:15.5px;font-weight:900;letter-spacing:.015em;
 }
 .wsh .num{
   flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
   width:19px;height:19px;border-radius:6px;
-  background:var(--accent);color:var(--on-accent);
+  background:var(--sechd);color:var(--on-sechd);
   font-size:11px;font-weight:800;line-height:1;
 }
-.wsh .tm{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wsh .tm{flex:1 1 auto;min-width:0;padding-right:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wsh .sc{flex:0 0 auto;font-size:15.5px;font-weight:800;
+  letter-spacing:.01em;padding:2px 6px;border-radius:6px;
+  background:color-mix(in srgb,var(--sechd) 18%,transparent);
+  color:var(--sechd-tx);
+  background:color-mix(in srgb,var(--sechd) 30%,transparent);
+  border:1px solid color-mix(in srgb,var(--sechd) 55%,transparent);
+  white-space:nowrap;margin-right:0;flex-shrink:0;line-height:1.15}
+/* ---- 定義タブ・定義一覧 ---- */
+#tabs button.defsbtn{
+  color:var(--sechd-tx);font-weight:800;
+  border-left:1px solid color-mix(in srgb,var(--sechd) 40%,var(--line));
+  margin-left:0;position:sticky;right:0;z-index:2;
+  background:color-mix(in srgb,var(--sechd) 20%,var(--card));
+  box-shadow:-8px 0 10px -6px rgba(0,0,0,.45);
+}
+#tabs button.defsbtn.on{background:color-mix(in srgb,var(--sechd) 26%,transparent);border-bottom-color:var(--sechd)}
+#wrap.wdefs{padding:8px 8px 16px}
+.dhint{font-size:10.5px;color:var(--tx2);line-height:1.45;padding:0 2px 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dhint .dall{font:inherit;font-size:10.5px;font-weight:800;color:var(--sechd-tx);
+  background:color-mix(in srgb,var(--sechd) 22%,transparent);
+  border:1px solid color-mix(in srgb,var(--sechd) 45%,transparent);
+  border-radius:6px;padding:4px 8px}
+.dsec{background:var(--card);border:1px solid var(--line);border-radius:8px;
+  margin:0 0 7px;overflow:hidden}
+.dsec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:6px;
+  padding:8px 10px;font-size:12.5px;font-weight:800;color:var(--sechd-tx);
+  background:color-mix(in srgb,var(--sechd) 13%,var(--card));
+  border-left:3px solid var(--sechd)}
+.dsec>summary::-webkit-details-marker{display:none}
+.dsec>summary .n{margin-left:auto;font-size:9.5px;font-weight:700;color:var(--tx2);
+  background:color-mix(in srgb,var(--tx2) 14%,transparent);padding:1px 5px;border-radius:4px}
+.dsec dl{margin:0;padding:2px 10px 9px}
+.dsec dt{font-size:11.5px;font-weight:800;color:var(--tx);margin-top:8px;line-height:1.3}
+.dsec dt .tk{font-weight:600;font-size:9.5px;color:var(--tx2);opacity:.8;margin-left:3px}
+.dsec dd{margin:2px 0 0;font-size:11px;line-height:1.5;color:var(--tx2)}
+.dsec dd em{font-style:normal;display:block;font-size:10.5px;font-weight:700;
+  color:color-mix(in srgb,var(--sechd) 62%,var(--tx));margin-bottom:1px}
 /* ---- 行（2段：上=名称と数値 / 下=バー） ---- */
 .wr{
   display:block;position:relative;
   padding:6px 10px 7px;
-  border-bottom:1px solid color-mix(in srgb,var(--line) 40%,transparent);
+  border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent);
 }
-.wsec .wr:nth-child(even){background:var(--stripe)}
+.wr.alt{background:var(--stripe);border-bottom-color:transparent}
+.wr.alt+.wr{border-top:1px solid color-mix(in srgb,var(--line) 45%,transparent)}
 .wtop{display:flex;align-items:baseline;gap:7px;line-height:1.15}
 .wn{
   flex:1 1 auto;min-width:0;
@@ -94,7 +142,7 @@ body{
 }
 /* バー：中央0を基準に左右へ伸びる（セクション内最大値で正規化） */
 .wbar{
-  position:relative;height:6px;margin-top:4px;
+  position:relative;height:9px;margin-top:5px;
   border-radius:3px;overflow:hidden;
   background:color-mix(in srgb,var(--line) 55%,transparent);
 }
@@ -104,9 +152,12 @@ body{
 }
 .wbar i{
   position:absolute;top:0;bottom:0;border-radius:3px;display:block;
+  box-shadow:0 0 0 1px rgba(0,0,0,.06) inset;
 }
 .wbar i.p{background:var(--up)}
 .wbar i.n{background:var(--dn)}
+.wax{display:flex;justify-content:space-between;box-sizing:border-box;width:100%;padding:3px 12px 2px;
+  font-size:8.5px;font-weight:600;color:var(--tx2);opacity:.7;line-height:1;letter-spacing:.02em}
 .wc.p{color:var(--up)}
 .wc.n{color:var(--dn)}
 .wc.na{color:var(--na);font-weight:500;font-size:11px}
@@ -157,7 +208,7 @@ const SECTIONS=[
  {t:"その他のETF",col:2,items:[["半導体株","SMH"],["金鉱山株","GDX"],["銀鉱山株","SIL"]]},
  {t:"コモディティETF",col:3,items:[["コモディティ全般","DBC"],["エネルギー","DBE"],["天然ガス","UNG"],["ゴールド","GLD"],["シルバー","SLV"],["ベースメタル","DBB"],["農産物","DBA"]]},
  {t:"債券ETF",col:3,items:[["短期債","SHY",null,"dv"],["中期債","IEF",null,"dv"],["20年超債券","TLT",null,"dv"],["債券合計","AGG",null,"dv"],["債券全般","BND",null,"dv"],["TIPS","TIP",null,"dv"],["ハイイールド債","HYG",null,"dv"]]},
- {t:"暗号通貨",col:3,items:[["ビットコイン","BTC-USD"],["イーサリアム","ETH-USD"],["ソラナ","SOL-USD"],["リップル","XRP-USD"],["BNB","BNB-USD"],["ドージコイン","DOGE-USD"],["カルダノ","ADA-USD"],["チェーンリンク","LINK-USD"],["アバランチ","AVAX-USD"],["ライトコイン","LTC-USD"]]}
+ {t:"暗号通貨",col:3,items:[["BTCUSD","BTC-USD"],["ETHUSD","ETH-USD"],["SOLUSD","SOL-USD"],["XRPUSD","XRP-USD"],["BNBUSD","BNB-USD"],["DOGEUSD","DOGE-USD"],["ADAUSD","ADA-USD"],["LINKUSD","LINK-USD"],["AVAXUSD","AVAX-USD"],["LTCUSD","LTC-USD"]]}
 ];
 /* 分配金込み（調整後終値）で取得する要素＝債券7＋DVY。それ以外は一括API（価格ベース） */
 const ADJ=["SHY","IEF","TLT","AGG","BND","TIP","HYG","DVY"];
@@ -1281,35 +1332,51 @@ try{
 /* ===== セクション表示名（番号つき） ===== */
 const WNAMES=["名目市場金利","実質金利","米国株価指数","S&P500各セクター",
               "各国株価指数","その他ETF","コモディティ","債券","暗号通貨"];
+/* セクションごとのバー満杯値（0を中央に左右対称）。実質金利のみ pt なので別スケール */
+const WSCALE_YTD=[100,10,100,100,100,100,100,100,100];  /* 年初来：−100〜+100% / 実質−10〜+10pt */
+const WSCALE_M  =[50,1,50,50,50,50,50,50,50];            /* 各月：−50〜+50% / 実質−1〜+1pt */
+const WSCALE=WSCALE_YTD;   /* 後方互換（描画時は wScale() を使う） */
+function wScale(){ return CUR===0 ? WSCALE_YTD : WSCALE_M; }
+const WUNIT =["%","pt","%","%","%","%","%","%","%"];
+const WMAX=[];
 
 /* ===== コンパクト描画（TradingView風） ===== */
 function wRender(){
+  if(WDEFS) return;
   const V=pageVals();
+  const SC=wScale();
   let h='';
   SECTIONS.forEach(function(s,i){
     const title=WNAMES[i]||s.t;
     h+='<section class="wsec"><div class="wsh">'
       +'<span class="num">'+(i+1)+'</span>'
-      +'<span class="tm">'+esc(title)+'</span></div>';
-    /* セクション内の最大絶対値でバー長を正規化（0を中央に左右へ） */
-    let mx=0;
-    s.items.forEach(function(it){ const x=V[it[1]]; if(typeof x==="number"&&Math.abs(x)>mx) mx=Math.abs(x); });
-    s.items.forEach(function(it){
+      +'<span class="tm">'+esc(title)+'</span>'
+      +'<span class="sc" title="'+(i===1
+          ? (CUR===0?'前年12月との差（ポイント）。バーは−10〜+10ptで満杯':'前月との差（ポイント）。バーは−1〜+1ptで満杯')
+          : (CUR===0?'前年12月比の変化率。バーは−100〜+100%で満杯':'前月比の変化率。バーは−50〜+50%で満杯'))+'">バー範囲 ±'+(SC[i]||100)+(WUNIT[i]||"%")+'</span></div>'
+      +'<div class="wax"><span>−'+(SC[i]||100)+(WUNIT[i]||"%")+'</span><span>0</span><span>+'+(SC[i]||100)+(WUNIT[i]||"%")+'</span></div>';
+    /* 固定スケール：セクションをまたいで長さを比較できる。
+       年初来＝−100〜+100%（実質−10〜+10pt）、各月＝−50〜+50%（実質−1〜+1pt）。 */
+    WMAX[i]=0;
+    s.items.forEach(function(it,idx){
       const tk=it[1], v=V[tk], cd=CDATA[tk];
+      const altCls=(idx%2===1)?' alt':'';
       let lvl='', cls='na', txt='…', bar='';
       if(cd && typeof cd.last==="number"){
         lvl = isRate(tk) ? cd.last.toFixed(2)+'%'
             : (cd.last>=1000 ? Math.round(cd.last).toLocaleString() : cd.last.toFixed(2));
       }
       if(typeof v==="number"){
-        txt=(v>0?'+':'')+v.toFixed(2)+'%'; cls=v>0?'p':(v<0?'n':'');
-        const t=mx>0? Math.min(1,Math.abs(v)/mx) : 0;
-        const w=(t*50).toFixed(1);
+        const u=WUNIT[i]||'%';
+        txt=(v>0?'+':'')+v.toFixed(2)+u; cls=v>0?'p':(v<0?'n':'');
+        const dom=SC[i]||100;
+        const t=Math.min(1,Math.abs(v)/dom);
+        const w=Math.max(2.2, t*50).toFixed(1);   /* 小さくても見えるよう最小幅1.2% */
         bar = v>0
           ? '<i class="p" style="left:50%;width:'+w+'%"></i>'
           : (v<0 ? '<i class="n" style="right:50%;width:'+w+'%"></i>' : '');
       } else if(v===null){ txt='--'; cls='na'; }
-      h+='<div class="wr"><div class="wtop">'
+      h+='<div class="wr'+altCls+'"><div class="wtop">'
         +'<span class="wn">'+esc(it[0])+'</span>'
         +'<span class="wv">'+lvl+'</span>'
         +'<span class="wc '+cls+'">'+txt+'</span></div>'
@@ -1317,23 +1384,57 @@ function wRender(){
     });
     h+='</section>';
   });
-  document.getElementById('wrap').innerHTML=h;
+  const _w=document.getElementById('wrap'); _w.className=''; _w.innerHTML=h;
   const p=PERIODS[CUR];
   document.getElementById('fst').textContent=p.label+(ASOF? ' ／ 基準 '+ASOF:'');
+}
+let WDEFS=false;
+const WDEFS_HTML=(function(){
+  return '<div class="dhint">各項目の定義です。見出しをタップで開閉します。'
+   +'<button class="dall" id="dall">すべて開く</button></div>'
+   + SECTIONS.map(function(s){
+       return '<details class="dsec"><summary>'+esc(s.t)+'<span class="n">'+s.items.length+'</span></summary><dl>'
+        + s.items.map(function(it){
+            const nm=NAMES[it[1]]? '<em>'+esc(NAMES[it[1]])+'</em>' : '';
+            return '<dt>'+esc(it[0])+'<span class="tk">'+esc(it[1])+'</span></dt><dd>'+nm
+              +esc(DEFS[it[1]]||RATEDEFS[it[1]]||'（説明未登録）')+'</dd>';
+          }).join('')+'</dl></details>';
+     }).join('');
+})();
+function wDefs(){
+  const w=document.getElementById('wrap');
+  w.className='wdefs'; w.innerHTML=WDEFS_HTML;
+  const b=document.getElementById('dall');
+  if(b) b.addEventListener('click',function(){
+    const ds=w.querySelectorAll('.dsec');
+    const anyClosed=[].some.call(ds,function(d){ return !d.open; });
+    [].forEach.call(ds,function(d){ d.open=anyClosed; });
+    b.textContent=anyClosed?'すべて閉じる':'すべて開く';
+  });
+  document.getElementById('fst').textContent='項目の定義（全'+SECTIONS.reduce(function(a,s){return a+s.items.length;},0)+'要素）';
+  window.scrollTo(0,0);
 }
 function wTabs(){
   /* 今月より先（off）のタブは生成しない。当年の実績がある月だけを並べる */
   document.getElementById('tabs').innerHTML=PERIODS.map(function(p,i){
     if(p.off) return '';
     const lbl=esc(p.label)+(p.partial? '<sup>月中</sup>':'');
-    return '<button data-i="'+i+'"'+(i===CUR?' class="on"':'')+'>'+lbl+'</button>';
-  }).join('');
+    return '<button data-i="'+i+'"'+((!WDEFS&&i===CUR)?' class="on"':'')+'>'+lbl+'</button>';
+  }).join('')
+  +'<button data-i="-1" class="defsbtn'+(WDEFS?' on':'')+'">定義</button>';
+  /* 固定タブの実高を測り、body余白と見出しのsticky位置に反映 */
+  const _tb=document.getElementById('tabs');
+  if(_tb) document.documentElement.style.setProperty('--tabh', _tb.offsetHeight+'px');
 }
 document.getElementById('tabs').addEventListener('click',function(e){
   const b=e.target.closest('button'); if(!b) return;
-  show(+b.dataset.i,true);
-  wTabs(); wRender();
-  try{ sessionStorage.setItem('wid_tab',String(CUR)); }catch(err){}
+  const idx=+b.dataset.i;
+  if(idx===-1){ WDEFS=true; wTabs(); wDefs(); try{ sessionStorage.setItem('wid_defs','1'); }catch(err){} }
+  else{
+    WDEFS=false; try{ sessionStorage.removeItem('wid_defs'); }catch(err){}
+    show(idx,true); wTabs(); wRender();
+    try{ sessionStorage.setItem('wid_tab',String(CUR)); }catch(err){}
+  }
   window.scrollTo(0,0);
   const on=document.querySelector('#tabs button.on');
   if(on) on.scrollIntoView({inline:'center',block:'nearest'});
@@ -1347,10 +1448,12 @@ document.getElementById('full').href=(function(){
 render = function(){ wRender(); };
 
 try{
-  let t=0; try{ t=+(sessionStorage.getItem('wid_tab')||0)||0; }catch(e){}
-  if(t>0 && t<PERIODS.length && !PERIODS[t].off) CUR=t; else CUR=0;
+  /* 初期表示は必ず当月のタブ（PERIODS[0]=年初来、PERIODS[m]=m月） */
+  CUR = Math.min(MO, PERIODS.length-1);
+  if(sessionStorage.getItem('wid_defs')==='1') WDEFS=true;
 }catch(e){}
-wTabs(); wRender();
+wTabs(); if(WDEFS) wDefs(); else wRender();
+try{ const _on=document.querySelector('#tabs button.on'); if(_on) _on.scrollIntoView({inline:'center',block:'nearest'}); }catch(e){}
 setInterval(function(){ try{ wRender(); }catch(e){} },1500);
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>

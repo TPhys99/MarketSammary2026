@@ -193,7 +193,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-04-0170</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-04-0190</span>
 </footer>
 
 <script>
@@ -220,7 +220,7 @@ const SECTIONS=[
  {t:"その他のETF",col:2,items:[["半導体株","SMH"],["金鉱山株","GDX"],["銀鉱山株","SIL"]]},
  {t:"コモディティETF",col:3,items:[["コモディティ全般","DBC"],["エネルギー","DBE"],["天然ガス","UNG"],["ゴールド","GLD"],["シルバー","SLV"],["ベースメタル","DBB"],["農産物","DBA"]]},
  {t:"債券ETF",col:3,items:[["短期債","SHY",null,"dv"],["中期債","IEF",null,"dv"],["20年超債券","TLT",null,"dv"],["債券合計","AGG",null,"dv"],["債券全般","BND",null,"dv"],["TIPS","TIP",null,"dv"],["ハイイールド債","HYG",null,"dv"]]},
- {t:"暗号通貨",col:3,items:[["ビットコイン","BTC-USD"],["イーサリアム","ETH-USD"],["ソラナ","SOL-USD"],["リップル","XRP-USD"],["BNB","BNB-USD"],["ドージコイン","DOGE-USD"],["カルダノ","ADA-USD"],["チェーンリンク","LINK-USD"],["アバランチ","AVAX-USD"],["ライトコイン","LTC-USD"]]}
+ {t:"暗号通貨",col:3,items:[["BTCUSD","BTC-USD"],["ETHUSD","ETH-USD"],["SOLUSD","SOL-USD"],["XRPUSD","XRP-USD"],["BNBUSD","BNB-USD"],["DOGEUSD","DOGE-USD"],["ADAUSD","ADA-USD"],["LINKUSD","LINK-USD"],["AVAXUSD","AVAX-USD"],["LTCUSD","LTC-USD"]]}
 ];
 /* 分配金込み（調整後終値）で取得する要素＝債券7＋DVY。それ以外は一括API（価格ベース） */
 const ADJ=["SHY","IEF","TLT","AGG","BND","TIP","HYG","DVY"];
@@ -1331,12 +1331,13 @@ try{
   const i=fromHash();
   const _n=loadSnap();      /* 前回の全データを同期復元（通信ゼロで即描画） */
   watchdog(2500);           /* この時点で1件も取れていなければ素の fetch で再取得 */
-  show(i<0? 0 : i, false);
+  show(i<0? Math.min(MO,PERIODS.length-1) : i, false);   /* 初期表示＝当月タブ */
+  try{ const _on=document.querySelector('#pnav a.on'); if(_on) _on.scrollIntoView({inline:'center',block:'nearest'}); }catch(e){}
   STARTED=true;
   if(_n) setStatus("warn","<b>前回の値を表示中</b>（最新値を取得しています…）<span class=\"hint\">基準 "+ASOF+"</span>",null);
   ensureData();
 }catch(e){
-  try{ show(0,false); }catch(e2){}
+  try{ show(Math.min(MO,PERIODS.length-1),false); }catch(e2){}
 }
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
