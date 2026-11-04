@@ -120,7 +120,7 @@ body{
   color:color-mix(in srgb,var(--sechd) 62%,var(--tx));margin-bottom:1px}
 /* ---- 行（2段：上=名称と数値 / 下=バー） ---- */
 .wr{
-  display:grid;grid-template-columns:156px 60px 48px minmax(0,1fr);gap:4px;
+  display:grid;grid-template-columns:180px 60px 48px minmax(0,1fr);gap:4px;
   align-items:center;justify-content:start;
   position:relative;
   padding:6px 6px;
@@ -130,7 +130,7 @@ body{
 .wr.alt+.wr{border-top:1px solid color-mix(in srgb,var(--line) 45%,transparent)}
 .wtop{display:flex;align-items:baseline;gap:7px;line-height:1.15}
 .wn{
-  width:156px;min-width:0;
+  width:180px;min-width:0;
   font-size:13px;font-weight:500;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
@@ -159,8 +159,15 @@ body{
 }
 .wbar i.p{background:var(--up)}
 .wbar i.n{background:var(--dn)}
-.wax{display:flex;justify-content:space-between;box-sizing:border-box;width:100%;padding:3px 12px 2px;
-  font-size:8.5px;font-weight:600;color:var(--tx2);opacity:.7;line-height:1;letter-spacing:.02em}
+.wax{display:grid;grid-template-columns:180px 60px 48px minmax(0,1fr);gap:4px;
+  padding:3px 6px 2px;font-size:8.5px;font-weight:600;color:var(--tx2);opacity:.7;line-height:1;letter-spacing:.02em}
+/* 目盛りは「バー列と同じ4列グリッド」に載せ、0 はバー列の中央と厳密に一致させる。
+   旧実装は全幅flex＋左右12pxパディングだったため、0が画面中央に出てバーの0点とずれていた。 */
+.wax .ax{grid-column:4;position:relative;height:10px}
+.wax .ax b{position:absolute;top:0;font-weight:600;white-space:nowrap}
+.wax .ax b:nth-child(1){left:0}
+.wax .ax b:nth-child(2){left:50%;transform:translateX(-50%)}
+.wax .ax b:nth-child(3){right:0}
 .wc.z{color:var(--tx2)}
 .wbar i.z{background:var(--tx2);opacity:.75;border-radius:2px}
 .wc.p{color:var(--up)}
@@ -218,6 +225,9 @@ const SECTIONS=[
 ];
 /* 分配金込み（調整後終値）で取得する要素＝債券7＋DVY。それ以外は一括API（価格ベース） */
 const ADJ=["SHY","IEF","TLT","AGG","BND","TIP","HYG","DVY"];
+/* 為替は24時間取引で月足の区切りが不安定（実測：JPY=X 2026-01 の月足154.74 vs 日足月末153.16）。
+   日足から月末終値を作り、定義を「NY引けの最終営業日」に統一する。 */
+const FXSET={"DX-Y.NYB":1,"JPY=X":1,"EURUSD=X":1,"USDINR=X":1,"INRJPY=X":1};
 /* 金利はYahooでは取れないため各国の一次情報源から取得（値は利回り水準・％） */
 const RATEKEYS=["US2Y","US10Y","JP2Y","JP10Y","IN2Y","IN10Y","CN2Y","CN10Y","EU2Y","EU10Y",
  "DE2Y","DE10Y","GB2Y","GB10Y","BR10Y","KR2Y","KR10Y"];
@@ -704,6 +714,26 @@ function monthMap(ts,px,endTs,tz){
   return {map:out,last:last,asof:d.toISOString().slice(0,10),
           time:d.toISOString().slice(11,16)+"Z"};
 }
+/* ===== 当月バーの遅延補正 =====
+   Yahooの月足は「当月」のバーが確定足より1営業日遅れることがある（実測：AGG の当月バーが10/30終値のまま）。
+   meta.regularMarketPrice は実勢価格なので、当月キーと last をこの値で上書きして現在値と騰落率を一致させる。 */
+function liveFix(m,res){
+  const meta=(res&&res.meta)||{};
+  const p=meta.regularMarketPrice;
+  if(!m||typeof p!=="number"||!isFinite(p)||p<=0) return m;
+  const t=meta.regularMarketTime;
+  const d=t? new Date(t*1000) : new Date();
+  const tz=meta.exchangeTimezoneName;
+  let k;
+  try{
+    k=new Intl.DateTimeFormat("en-CA",{timeZone:tz||"UTC",year:"numeric",month:"2-digit"})
+       .formatToParts(d).reduce(function(a,x){ if(x.type==="year") a.y=x.value; if(x.type==="month") a.m=x.value; return a; },{});
+    k=k.y+"-"+k.m;
+  }catch(e){ k=d.toISOString().slice(0,7); }
+  m.map[k]=p; m.last=p;
+  if(t) m.asof=new Date(t*1000).toISOString().slice(0,10);
+  return m;
+}
 async function fetchChunk(syms,order){
   const hosts=["query1","query2"];
   for(let k=0;k<2;k++){
@@ -731,7 +761,8 @@ async function fetchChunk(syms,order){
    直列×プロキシ経由で非常に遅くなる。指数系はCORS可のchart APIを並列で直叩きする。 */
 function isIdxTk(tk){ return /^\^/.test(tk) || /\.[A-Z]{1,3}$/.test(tk) || tk.indexOf("=")>=0; }
 async function fetchIdxDirect(tk){
-  const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)+"?range=2y&interval=1mo";
+  const iv=FXSET[tk]? "1d" : "1mo";
+  const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)+"?range=2y&interval="+iv;
   const r=await fetchDirect(u,2500);
   if(!r.body) return null;
   try{
@@ -741,7 +772,7 @@ async function fetchIdxDirect(tk){
     const q=res.indicators||{};
     const px=(q.quote&&q.quote[0]&&q.quote[0].close)||[];
     const m=monthMap(res.timestamp,px,res.meta&&res.meta.regularMarketTime,(res.meta&&res.meta.exchangeTimezoneName)||"UTC");
-    if(m){ m.adj=false; SRCS["指数API"]=(SRCS["指数API"]||0)+1; OKN++; return m; }
+    if(m){ m.adj=false; liveFix(m,res); SRCS["指数API"]=(SRCS["指数API"]||0)+1; OKN++; return m; }
   }catch(e){}
   return null;
 }
@@ -840,7 +871,7 @@ async function fetchAdj(tk){
     const px=hasAdj? adj : (q.quote&&q.quote[0]&&q.quote[0].close)||[];
     const endTs=res.meta&&res.meta.regularMarketTime;
     const m=monthMap(res.timestamp,px,endTs,(res.meta&&res.meta.exchangeTimezoneName)||"UTC");
-    if(m){ m.adj=hasAdj; const kk=hasAdj?"個別API(配)":"個別API(価格)"; SRCS[kk]=(SRCS[kk]||0)+1; OKN++; }
+    if(m){ m.adj=hasAdj; liveFix(m,res); const kk=hasAdj?"個別API(配)":"個別API(価格)"; SRCS[kk]=(SRCS[kk]||0)+1; OKN++; }
     return m;
   }catch(e){ return null; }
 }
@@ -862,6 +893,10 @@ function loadSnap(){
     let n=0;
     Object.keys(j.d).forEach(function(tk){
       const o=j.d[tk];
+      /* 金利はスナップショットから復元しない。古い水準が残ると表示が実勢から乖離する
+         （実測：BR10Y が 15.88% のまま、一次情報の10月末 15.51% と 0.37pt ずれた）。
+         金利は専用キャッシュ（10分TTL）＋当日取得のみを使う。 */
+      if(RATEKEYS.indexOf(tk)>=0) return;
       if(o&&o.map){ CDATA[tk]=o; n++; if(o.asof&&o.asof>ASOF) ASOF=o.asof; }
     });
     SNAP_TS=j.ts;
@@ -1689,6 +1724,15 @@ async function fetchRates(prog){
       });
       /* [2] 月次ヒストリ（年初比の基準・各月ページ用）は背後で埋める。既に基準があれば急がない */
       const need=emList.filter(function(tk){ return !hasBase(CDATA[tk]) || snapStale(); });
+      /* 中・韓・伯は配信元が不安定で空応答を返すことがある（実測：KR10Y が4回連続で空）。
+         1回で諦めず、2秒あけて最大3回まで取り直す。 */
+      async function fetchEmRetry(tk){
+        for(let k=0;k<3;k++){
+          try{ const m=await fetchEm(tk); if(m&&m.last) return m; }catch(e){}
+          if(k<2) await new Promise(function(r){ setTimeout(r,2000); });
+        }
+        return null;
+      }
       let i=0;
       async function w(){
         while(i<need.length){
@@ -1972,7 +2016,7 @@ function wRender(){
       +'<span class="sc" title="'+(i===1
           ? (CUR===0?'前年12月との差（ポイント）。バーは−10〜+10ptで満杯':'前月との差（ポイント）。バーは−3〜+3ptで満杯')
           : (CUR===0?'前年12月比の変化率。バーは−100〜+100%で満杯':'前月比の変化率。バーは−20〜+20%で満杯'))+'">バー範囲 ±'+(SC[i]||100)+(WUNIT[i]||"%")+'</span></div>'
-      +'<div class="wax"><span>−'+(SC[i]||100)+(WUNIT[i]||"%")+'</span><span>0</span><span>+'+(SC[i]||100)+(WUNIT[i]||"%")+'</span></div>';
+      +'<div class="wax"><span class="ax"><b>−'+(SC[i]||100)+(WUNIT[i]||"%")+'</b><b>0</b><b>+'+(SC[i]||100)+(WUNIT[i]||"%")+'</b></span></div>';
     /* 固定スケール：セクションをまたいで長さを比較できる。
        年初来＝−100〜+100%（実質−10〜+10pt）、各月＝−20〜+20%（実質−3〜+3pt）。 */
     WMAX[i]=0;
