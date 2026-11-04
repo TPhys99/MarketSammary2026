@@ -679,11 +679,23 @@ function jsonOf(text){
   if(a<0||b<=a) return null;
   return JSON.parse(s.slice(a,b+1));
 }
-function monthMap(ts,px,endTs){
+function monthMap(ts,px,endTs,tz){
+  /* 月の判定は「取引所の現地時間」で行う。
+     Yahooの月足タイムスタンプは取引所の月初（現地00:00）で、UTCでは前月末23:00になる。
+     UTCで月を切ると欧州・アジアの指数が1か月前にずれ、直近月のキーが前月と衝突して
+     月が丸ごと欠落する（実測：^FTSE 2025-10 が欠落し、8月タブに9月末値が出ていた）。 */
   const out={}; let last=null,lastT=0;
+  let fmt=null;
+  if(tz){ try{ fmt=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit"}); }catch(e){ fmt=null; } }
   for(let i=0;i<ts.length;i++){
     const c=px[i]; if(typeof c!=="number"||!isFinite(c)) continue;
-    out[new Date(ts[i]*1000).toISOString().slice(0,7)]=c;
+    let k;
+    if(fmt){ const p=fmt.formatToParts(new Date(ts[i]*1000));
+      const y=(p.find(function(x){return x.type==="year";})||{}).value;
+      const m=(p.find(function(x){return x.type==="month";})||{}).value;
+      k=y+"-"+m;
+    }else{ k=new Date(ts[i]*1000).toISOString().slice(0,7); }
+    out[k]=c;                                  /* 後勝ち＝各月の最終営業日 */
     if(ts[i]>lastT){ lastT=ts[i]; last=c; }
   }
   if(last===null) return null;
@@ -728,7 +740,7 @@ async function fetchIdxDirect(tk){
     if(!res||!res.timestamp||!res.timestamp.length) return null;
     const q=res.indicators||{};
     const px=(q.quote&&q.quote[0]&&q.quote[0].close)||[];
-    const m=monthMap(res.timestamp,px,res.meta&&res.meta.regularMarketTime);
+    const m=monthMap(res.timestamp,px,res.meta&&res.meta.regularMarketTime,(res.meta&&res.meta.exchangeTimezoneName)||"UTC");
     if(m){ m.adj=false; SRCS["指数API"]=(SRCS["指数API"]||0)+1; OKN++; return m; }
   }catch(e){}
   return null;
@@ -827,7 +839,7 @@ async function fetchAdj(tk){
     const hasAdj=!!(adj&&adj.some(function(x){return typeof x==="number"&&isFinite(x);}));
     const px=hasAdj? adj : (q.quote&&q.quote[0]&&q.quote[0].close)||[];
     const endTs=res.meta&&res.meta.regularMarketTime;
-    const m=monthMap(res.timestamp,px,endTs);
+    const m=monthMap(res.timestamp,px,endTs,(res.meta&&res.meta.exchangeTimezoneName)||"UTC");
     if(m){ m.adj=hasAdj; const kk=hasAdj?"個別API(配)":"個別API(価格)"; SRCS[kk]=(SRCS[kk]||0)+1; OKN++; }
     return m;
   }catch(e){ return null; }
