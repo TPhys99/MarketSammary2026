@@ -221,7 +221,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-05-0383</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-05-0384</span>
 </footer>
 
 <script>
@@ -2065,10 +2065,17 @@ function drawChart(tk){
   });
   const lastP=pts[pts.length-1];
   g+="<circle cx=\""+X(lastP.i).toFixed(1)+"\" cy=\""+Y(lastP.v).toFixed(1)+"\" r=\"3\" fill=\"var(--accent)\" stroke=\"var(--card)\" stroke-width=\"1.2\"/>";
+  /* 横軸：2か月に1回「〇月」だけを表示（年は付けない） */
   months.forEach(function(p,i){
-    if(i!==months.length-1 && (months.length-1-i)%4!==0) return;
-    const lb=p.mm+"月"+(p.ly?"<"+String(p.ym).slice(2):"");
-    g+="<text x=\""+X(i).toFixed(1)+"\" y=\""+(H-10)+"\" text-anchor=\"middle\" font-size=\"8\" fill=\"var(--tx2)\">"+lb+"</text>";
+    if((months.length-1-i)%2!==0) return;
+    g+="<text x=\""+X(i).toFixed(1)+"\" y=\""+(H-10)+"\" text-anchor=\"middle\" font-size=\"8\" fill=\"var(--tx2)\">"+p.mm+"月</text>";
+  });
+  /* 毎月の数値を点の脇に記載（線と重ならないよう上下へ振り分け） */
+  pts.forEach(function(p,idx){
+    const up=(idx%2===0);
+    const yy=Y(p.v)+(up? -4.5 : 8.5);
+    g+="<text x=\""+X(p.i).toFixed(1)+"\" y=\""+yy.toFixed(1)+"\" text-anchor=\"middle\" font-size=\"6.6\" "
+      +"fill=\"var(--tx2)\" opacity=\".95\">"+fmtAxis(p.v,u.u)+"</text>";
   });
   box.innerHTML="<svg viewBox=\"0 0 "+W+" "+H+"\" role=\"img\" aria-label=\"月次推移\"><g>"+g+"</g></svg>"
     +"<div class=\"tip\" style=\"left:"+(X(lastP.i)/W*100).toFixed(1)+"%;top:"+(Y(lastP.v)/H*100).toFixed(1)+"%\">"

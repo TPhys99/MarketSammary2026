@@ -2057,10 +2057,17 @@ function drawChart(tk){
   });
   const lastP=pts[pts.length-1];
   g+="<circle cx=\""+X(lastP.i).toFixed(1)+"\" cy=\""+Y(lastP.v).toFixed(1)+"\" r=\"3\" fill=\"var(--accent)\" stroke=\"var(--card)\" stroke-width=\"1.2\"/>";
+  /* 横軸：2か月に1回「〇月」だけを表示（年は付けない） */
   months.forEach(function(p,i){
-    if(i!==months.length-1 && (months.length-1-i)%4!==0) return;
-    const lb=p.mm+"月"+(p.ly?"<"+String(p.ym).slice(2):"");
-    g+="<text x=\""+X(i).toFixed(1)+"\" y=\""+(H-10)+"\" text-anchor=\"middle\" font-size=\"8\" fill=\"var(--tx2)\">"+lb+"</text>";
+    if((months.length-1-i)%2!==0) return;
+    g+="<text x=\""+X(i).toFixed(1)+"\" y=\""+(H-10)+"\" text-anchor=\"middle\" font-size=\"8\" fill=\"var(--tx2)\">"+p.mm+"月</text>";
+  });
+  /* 毎月の数値を点の脇に記載（線と重ならないよう上下へ振り分け） */
+  pts.forEach(function(p,idx){
+    const up=(idx%2===0);
+    const yy=Y(p.v)+(up? -4.5 : 8.5);
+    g+="<text x=\""+X(p.i).toFixed(1)+"\" y=\""+yy.toFixed(1)+"\" text-anchor=\"middle\" font-size=\"6.6\" "
+      +"fill=\"var(--tx2)\" opacity=\".95\">"+fmtAxis(p.v,u.u)+"</text>";
   });
   box.innerHTML="<svg viewBox=\"0 0 "+W+" "+H+"\" role=\"img\" aria-label=\"月次推移\"><g>"+g+"</g></svg>"
     +"<div class=\"tip\" style=\"left:"+(X(lastP.i)/W*100).toFixed(1)+"%;top:"+(Y(lastP.v)/H*100).toFixed(1)+"%\">"
