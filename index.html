@@ -98,22 +98,22 @@ h1{margin:0;font-size:16.5px;letter-spacing:.01em;line-height:1.35}
 .rt .src{font-style:normal;font-weight:400;font-size:7.5px;opacity:.62;margin-left:1px;letter-spacing:-.2px}
 .top5 .low{margin-left:auto;color:var(--tx2);font-size:10px}
 
-.row{display:grid;grid-template-columns:156px 49px 44px minmax(0,1fr);gap:4px;align-items:center;height:20px}
+.row{display:grid;grid-template-columns:156px 60px 48px minmax(0,1fr);gap:4px;align-items:center;height:20px}
 .nm{flex:0 0 var(--nw,156px);width:var(--nw,156px);min-width:0;font-size:11px;white-space:nowrap;overflow:hidden}
 .nmx{white-space:nowrap}
 .nm .ix{font-style:normal;font-size:9px;font-weight:600;color:var(--tx2);opacity:.85;margin-left:4px}
 .nm .tk{font-style:normal;font-size:9px;font-weight:500;color:inherit;opacity:.9;margin-left:2px}
-.lv{flex:0 0 49px;width:49px;text-align:right;font-size:11px;font-weight:600;
+.lv{flex:0 0 60px;width:60px;text-align:right;font-size:11px;font-weight:600;
     color:var(--tx2);font-variant-numeric:tabular-nums;white-space:nowrap}
-.lv.na{font-weight:400;font-size:9.5px;opacity:.8}
+.lv.na{font-weight:400;font-size:8px;letter-spacing:-.3px;opacity:.8}
 .nm.clamp{text-overflow:ellipsis}
 .nm .dv{font-style:normal;font-size:8px;font-weight:700;border:1px solid var(--tx2);color:var(--tx2);
         border-radius:3px;padding:0 3px;margin-left:3px;vertical-align:1px}
-.vl{flex:0 0 44px;width:44px;text-align:right;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.vl{flex:0 0 48px;width:48px;text-align:right;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
 .vl.p{color:var(--pos)}
 .vl.n{color:var(--neg)}
 .vl.z{color:var(--tx2)}
-.vl.na{font-weight:400;font-size:9px;color:var(--tx2)}
+.vl.na{font-weight:400;font-size:8px;letter-spacing:-.3px;color:var(--tx2)}
 .vl .cap{font-size:8px;color:var(--tx2);font-weight:600;margin-left:2px}
 .bar{position:relative;width:100%;height:14px;justify-self:stretch}
 .bar::before{content:"";position:absolute;left:50%;margin-left:-0.5px;top:0;bottom:0;width:1px;background:var(--zero)}
@@ -200,7 +200,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-05-0370</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-05-0377</span>
 </footer>
 
 <script>
@@ -227,7 +227,7 @@ const SECTIONS=[
  {t:"S&P500セクターETF",col:1,items:[["一般消費財","XLY","hl"],["生活必需品","XLP","hl"],["エネルギー","XLE","hl"],["金融","XLF","hl"],["ヘルスケア","XLV","hl"],["工業","XLI","hl"],["素材","XLB","hl"],["テクノロジー","XLK","hl"],["通信サービス","XLC","hl"],["公益","XLU","hl"],["不動産","XLRE","hl"]]},
  {t:"主要国株式指数",col:2,items:[['日本',"^N225","日経平均","hl"],["インド","^BSESN","SENSEX"],["中国","000001.SS","上海総合"],["香港","^HSI","ハンセン"],["ドイツ","^GDAXI","DAX"],["英国","^FTSE","FTSE100"],["フランス","^FCHI","CAC40"],["イタリア","FTSEMIB.MI","FTSE MIB"],["スペイン","^IBEX","IBEX35"],["カナダ","^GSPTSE","TSX"],["豪州","^AXJO","ASX200"],["ブラジル","^BVSP","ボベスパ"],["メキシコ","^MXX","IPC"],["南アフリカ","EZA","南アフリカETF"],["中東","EIS","中東ETF"],["新興国","EEM","新興国ETF"]]},
  {t:"その他のETF",col:2,items:[["半導体株","SMH"],["VIX","^VIX"],["PCC","PCC"]]},
- {t:"コモディティETF",col:3,items:[["コモディティ全般(DBC)","DBC"],["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["プラチナ鉱山(XME)","XME"],["プラチナ(PPLT)","PPLT"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
+ {t:"コモディティETF",col:3,items:[["コモディティ全般(DBC)","DBC"],["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["金属鉱山(XME)","XME"],["プラチナ(PPLT)","PPLT"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
   {t:"暗号通貨",col:3,items:[["ビットコイン/ドル","BTC-USD"],["イーサリアム/ドル","ETH-USD"],["リップル/ドル","XRP-USD"],["ライトコイン/ドル","LTC-USD"],["ソラナ/ドル","SOL-USD"],["ドージコイン/ドル","DOGE-USD"],["カルダノ/ドル","ADA-USD"],["チェーンリンク/ドル","LINK-USD"],["BNB/ドル","BNB-USD"],["アバランチ/ドル","AVAX-USD"],["ビットコイン/円","BTC-JPY"],["イーサリアム/円","ETH-JPY"],["リップル/円","XRP-JPY"]]}
 ];
 /* 分配金込み（調整後終値）で取得する要素＝債券7＋DVY。それ以外は一括API（価格ベース） */
@@ -254,9 +254,9 @@ const RATEDEFS={
 const NOW=new Date(), YR=NOW.getFullYear(), MO=NOW.getMonth()+1;
 function pad2(n){ return String(n).padStart(2,"0"); }
 const PERIODS=[{id:"ytd",label:"年初来",partial:false}].concat((function(){
-  /* 直近12か月（今月が右端）。例：2026/11 → 2025-12 … 2026-11 */
+  /* 直近16か月（今月が右端）。例：2026/11 → 2025-08 … 2026-11 */
   const a=[];
-  for(let k=11;k>=0;k--){
+  for(let k=15;k>=0;k--){
     const d=new Date(YR,MO-1-k,1), y=d.getFullYear(), m=d.getMonth()+1;
     a.push({id:y+"-"+pad2(m),label:m+"月",ym:y,mm:m,partial:(y===YR&&m===MO),ly:(y!==YR)});
   }
@@ -303,7 +303,7 @@ const DEFS  = {
 "USO":"WTI原油先物に連動するETF（United States Oil Fund）。原油価格そのものの値動きを追う。",
 "SIL":"銀鉱山株ETF（Global X Silver Miners）。銀価格に連動する鉱山企業群。",
 "COPX":"銅鉱山株ETF（Global X Copper Miners）。銅価格に連動する鉱山企業群。",
-"XME":"金属鉱山株ETF（SPDR S&P Metals & Mining）。白金族を含む金属鉱山企業の広範な指数。純粋なプラチナ鉱山ETFは存在しないため代用。",
+"XME":"金属鉱山ETF（SPDR S&P Metals & Mining）。石炭・鉄鋼・貴金属・銅などの鉱山会社に幅広く投資。プラチナ専業の上場ETFは存在しない。",
 "PPLT":"プラチナ現物ETF（abrdn Physical Platinum Shares）。プラチナ地金の価格に連動。",
 "CPER":"銅先物に連動するETF（United States Copper Index Fund）。銅は景気敏感で「Dr. Copper」とも呼ばれる。",
 "WEAT":"小麦先物に連動するETF（Teucrium Wheat Fund）。天候・輸出規制の影響を受けやすい。",
@@ -552,7 +552,7 @@ let FIT_TRIES=0;
    以前はセクションごとに書き→読みを繰り返し86要素ぶん再計算していた（モバイルで数百ms）。 */
 const FITKEY="ytd_fit_v1";
 function fitNames(){
-  /* 列幅は固定（全セクション共通）。名前列156px / 現在値46px / 騰落率44px / バー51.7px */
+  /* 列幅は固定（全セクション共通）。名前列156px / 現在値60px / 騰落率48px / バーは残り全幅 */
   const caps=document.querySelectorAll("section.card");
   for(let i=0;i<caps.length;i++) caps[i].style.setProperty("--nw","156px");
 }
@@ -871,7 +871,7 @@ function saveSnap(){
       const d={};
       ALL.forEach(function(tk){
         const c=CDATA[tk]; if(!c) return;
-        const ks=Object.keys(c.map).sort().slice(-13), m={};
+        const ks=Object.keys(c.map).sort().slice(-20), m={};
         ks.forEach(function(k){ m[k]=c.map[k]; });
         d[tk]={map:m,last:c.last,asof:c.asof,adj:c.adj,rate:c.rate};
       });
@@ -1057,44 +1057,32 @@ let BASES_TRIES=0;
 /* ===== ユーロ圏2年を独立ジョブで確実に取る =====
    他と競合して期限切れになるのを避けるため、専用の取得経路を別に持つ。
    経路：ECB直（1.3秒）→ DBnomics（CORS可）→ プロキシ。どれか1つ成功すれば良い。 */
-let EU2_DONE=false;
-async function fetchEu2Y(){
-  if(EU2_DONE || (CDATA["EU2Y"] && CDATA["EU2Y"].map && CDATA["EU2Y"].map[(YR-1)+"-12"]!==undefined)) return true;
-  EU2_DONE=true;
-  const u="https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_2Y"
-        + "?startPeriod="+(YR-1)+"-09-01&format=csvdata&detail=dataonly";
-  /* [1] ECB直 */
-  for(let k=0;k<2;k++){
-    const r=await fetchDirect(u,3500);
-    if(r.body){ const ok=parseEu2Csv(r.body); if(ok) return true; }
-  }
-  /* [2] DBnomics（CORS可・観測値だけ） */
-  try{
-    const d="https://api.db.nomics.world/v22/series/ECB/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.SR_2Y?observations=1";
-    const r2=await fetchDirect(d,6000);
-    if(r2.body){
-      const t=textOf(r2.body), a=t.indexOf("{");
-      const j=JSON.parse(a>=0? t.slice(a,t.lastIndexOf("}")+1) : t);
-      const s=j&&j.series&&j.series.docs&&j.series.docs[0];
-      if(s&&s.period){
-        const daily={};
-        for(let i=0;i<s.period.length;i++){
-          const v=parseFloat(s.value[i]);
-          if(isFinite(v)&&/^\d{4}-\d{2}-\d{2}$/.test(s.period[i])) daily[s.period[i]]=v;
-        }
-        const mo=monthlyFromDaily(daily);
-        if(mo){ mergeRate("EU2Y",mo,"DBnomics"); SRCS["DBnomics"]=(SRCS["DBnomics"]||0)+1; return true; }
-      }
-    }
-  }catch(e){}
-  /* [3] プロキシ経由 */
-  try{
-    const r3=await fetchWithJina(u,8000,12000);
-    if(r3.body && parseEu2Csv(r3.body)) return true;
-  }catch(e){}
-  return false;
+/* ===== ユーロ圏（ECB）=====
+   実測で判明した実際の障害（推測なし・生ログで確認）：
+   ・ECB data-api は CORS 可（access-control-allow-origin: *）。ブラウザ直叩き自体は通る。
+   ・ただし系列単位で HTTP 504（"We are experiencing some problems"）を一時的に返す。
+     実測ログ：SR_2Y→504 / 同一秒の SR_10Y→200 / 直後 SR_2Y→200×3。
+     つまりECB側の生成失敗で、少し待って投げ直せば通る一時障害。
+   ・旧実装は試行前に EU2_DONE=true を立て、失敗後は二度と再試行しなかった
+     ＝1回の504でそのセッションは永久に「取得できません」になっていた。これが再発の原因。
+   対策：①指数バックオフ再試行（0/0.6/1.5/3/5秒・各9秒タイムアウト）
+        ②日次値をlocalStorageへ永久保存（一度取れたら消えない）
+        ③ECB→Eurostat→DBnomics→プロキシの多経路
+        ④ラッチせず、次回起動・再読込で必ず再挑戦 */
+const EU_KEY="ytd_eu_v1";
+const EUD=(function(){ try{ const j=JSON.parse(localStorage.getItem(EU_KEY)||"{}"); return (j&&typeof j==="object")?j:{}; }catch(e){ return {}; } })();
+function euPut(tk,d,v){ if(!isFinite(v)||v<=0) return; if(!EUD[tk]) EUD[tk]={};
+  if(EUD[tk][d]===v) return; EUD[tk][d]=v;
+  try{ localStorage.setItem(EU_KEY,JSON.stringify(EUD)); }catch(e){} }
+function euBuild(tk){
+  const o=EUD[tk]; if(!o) return false;
+  const mo=monthlyFromDaily(o); if(!mo) return false;
+  mergeRate(tk,mo,"ECB"); SRCS["ECB(保存)"]=(SRCS["ECB(保存)"]||0)+1;
+  if(mo.map[(YR-1)+"-12"]!==undefined) decPut(tk,mo.map[(YR-1)+"-12"]);
+  return true;
 }
-function parseEu2Csv(body){
+const EURETRY=[0,600,1500,3000,5000];
+function parseEcbCsv(body,tk){
   try{
     const daily={}; let it=-1, iv=-1, hdr=false;
     body.split(/\r?\n/).forEach(function(line){
@@ -1105,10 +1093,44 @@ function parseEu2Csv(body){
       const t=c[it]||"", v=parseFloat(c[iv]);
       if(isFinite(v)&&/^\d{4}-\d{2}-\d{2}/.test(t)) daily[t.slice(0,10)]=v;
     });
-    const mo=monthlyFromDaily(daily);
-    if(mo){ mergeRate("EU2Y",mo,"ECB"); SRCS["ECB"]=(SRCS["ECB"]||0)+1; return true; }
-  }catch(e){}
+    const ks=Object.keys(daily); if(!ks.length) return false;
+    ks.forEach(function(d){ euPut(tk,d,daily[d]); });
+    return true;
+  }catch(e){ return false; }
+}
+async function fetchEcbSeries(ser,tk){
+  const u="https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM."+ser
+        +"?startPeriod="+(YR-1)+"-11-01&format=csvdata&detail=dataonly";
+  for(let k=0;k<EURETRY.length;k++){
+    if(EURETRY[k]) await new Promise(function(r){ setTimeout(r,EURETRY[k]); });
+    let r=await fetchDirect(u,9000);
+    if(!r.body) r=await fetchDirect(u,9000);
+    if(r.body && parseEcbCsv(r.body,tk)){ SRCS["ECB"]=(SRCS["ECB"]||0)+1; OKN++; return true; }
+    if(k>=2){ /* 直取得が続けて失敗したらプロキシ経由も試す */
+      const r2=await fetchWithJina(u,8000,12000);
+      if(r2.body && parseEcbCsv(r2.body,tk)){ SRCS["ECB"]=(SRCS["ECB"]||0)+1; OKN++; return true; }
+    }
+  }
   return false;
+}
+/* ユーロ圏2年・10年をまとめて確保する（どちらか一方が落ちても他方は表示される） */
+async function fetchEuRates(){
+  const want=["EU2Y","EU10Y"].filter(function(tk){
+    const m=CDATA[tk];
+    return !m || !m.map || m.map[(YR-1)+"-12"]===undefined || snapStale();
+  });
+  if(!want.length) return 0;
+  let n=0;
+  await Promise.all(want.map(async function(tk){
+    const ser=(tk==="EU2Y")? "SR_2Y" : "SR_10Y";
+    let ok=false;
+    try{ ok=await fetchEcbSeries(ser,tk); }catch(e){}
+    if(ok){ euBuild(tk); n++; return; }
+    try{ if(await fetchDbn(ser,tk)){ n++; return; } }catch(e){}
+    if(euBuild(tk)) n++;               /* 今回取れなくても、保存済みの日次値で表示を維持 */
+  }));
+  try{ render(); }catch(e){}
+  return n;
 }
 async function rateBaseFix(){
   if(BASES_DONE) return;
@@ -1250,6 +1272,140 @@ async function fillEmDecLazy(){
   }));
   try{ render(); }catch(e){}
 }
+
+/* ===== 過去16か月タブの遡及補完（遅延実行・本流に一切待たせない） =====
+   原因：金利系の取得窓が「前年11月／前年12月」起点だったため、
+   16か月タブの古い側（前年8〜11月）は基準月・当月とも窓の外で「取得できません」になっていた。
+   対策：①取得窓を前々年6月起點へ拡張（月足は+25行・約+0.5KBで時間影響なし）
+        ②それでも欠ける月は、そのタブを開いた時だけ・欠損銘柄だけを裏で取り直す
+          （初期表示・他項目の取得ジョブには一切awaitで割り込まない） */
+const OLDFILL_TRIED={};
+let OLDFILL_RUNNING=false;
+function oldTabActive(){ const p=PERIODS[CUR]; return !!(p&&p.ym&&p.ym<YR&&p.mm); }
+async function fillOldLazy(){
+  const p=PERIODS[CUR]; if(!p||!p.ym||p.ym>=YR) return;
+  const cur=p.ym+"-"+pad2(p.mm);
+  const bk=(p.mm===1? (p.ym-1)+"-12" : p.ym+"-"+pad2(p.mm-1));
+  const need=RATEKEYS.filter(function(tk){
+    const m=CDATA[tk];
+    if(!m||!m.map) return true;
+    return m.map[cur]===undefined || m.map[bk]===undefined;
+  });
+  if(!need.length) return;
+  await Promise.all(need.map(async function(tk){
+    if((OLDFILL_TRIED[tk]||0)>=3) return;
+    let ok=false;
+    if(tk==="EU10Y"){
+      try{ ok=await eurostat10(); }catch(e){}
+      if(!ok){ try{ ok=await fetchDbn("SR_10Y","EU10Y"); }catch(e){} }
+    }else if(tk==="EU2Y"){
+      try{ ok=await fetchDbn("SR_2Y","EU2Y"); }catch(e){}
+    }else if(EMCODES[tk]){
+      /* 月足・前々年6月から（1本約30行・1KB弱。日足にしないので軽い） */
+      const u="https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=171."+EMCODES[tk]
+            +"&fields1=f1,f2,f3,f4&fields2=f51,f53&klt=103&fqt=0&beg="+(YR-2)+"0601&end="+YR+pad2(MO)+pad2(NOW.getDate());
+      let r=await fetchDirect(u,2500);
+      if(!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+u,4000); }catch(e){} }
+      if(r.body){
+        try{
+          const body=textOf(r.body), a=body.indexOf("{");
+          const j=JSON.parse(a>0? body.slice(a,body.lastIndexOf("}")+1) : body);
+          const daily={}; ((j&&j.data&&j.data.klines)||[]).forEach(function(ln){
+            const c=String(ln).split(","); const v=parseFloat(c[1]); if(isFinite(v)) daily[c[0]]=v; });
+          const mo=monthlyFromDaily(daily);
+          if(mo){ mergeRate(tk,mo,RSRC[tk]||"東財API"); ok=true; }
+        }catch(e){}
+      }
+      if(!ok && (tk==="DE2Y"||tk==="DE10Y")){ try{ const bb=await fetchBundes(tk); if(bb){ mergeRate(tk,bb,"Bundesbank"); ok=true; } }catch(e){} }
+    }
+    if(ok) OLDFILL_TRIED[tk]=0; else OLDFILL_TRIED[tk]=(OLDFILL_TRIED[tk]||0)+1;
+    try{ render(); }catch(e){}
+  }));
+}
+function maybeFillOld(){
+  if(!oldTabActive()||OLDFILL_RUNNING) return;
+  OLDFILL_RUNNING=true;
+  /* 表示は待たせない。60ms後に裏で開始し、届いた分だけ描き直す */
+  setTimeout(function(){
+    (async function(){
+      try{ await fillOldLazy(); }catch(e){}
+      OLDFILL_RUNNING=false;
+    })();
+  },60);
+}
+
+
+/* ===== 月足の欠落・月ずれ補修（Yahoo月足の穴） =====
+   実測（2026-11-05）：^FTSE の月足は 2025-09-30 の次が 2025-11-01 で、
+   10月のバーが丸ごと欠落。しかも各バーの値は「翌月の月末終値」を1か月早いラベルで持っている
+   （bar 2025-08-31=9350.4 は9月末、bar 2025-09-30=9717.3 は10月末）。
+   そのため10月タブは「取得できません」になり、他の月も1か月ずれた値になっていた。
+   対策：穴（内側の欠落）を検出した銘柄だけ、そのタブを開いた時に日足を1回取り、
+   月末終値を月次へ作り直して上書きする。初期表示・他項目の取得には一切割り込まない。 */
+const GAP_TRIED={};
+let GAP_RUNNING=false;
+function gapTargets(){
+  const p=PERIODS[CUR]; if(!p||!p.ym||!p.mm) return [];
+  const ck=p.ym+"-"+pad2(p.mm);
+  const bk=(p.mm===1? (p.ym-1)+"-12" : p.ym+"-"+pad2(p.mm-1));
+  return ALL.filter(function(tk){
+    if(RATEKEYS.indexOf(tk)>=0) return false;
+    const m=CDATA[tk]; if(!m||!m.map) return false;
+    const ks=Object.keys(m.map).sort(); if(ks.length<3) return false;
+    if(ck<ks[0]||ck>ks[ks.length-1]) return false;      /* 窓の外は対象外 */
+    return m.map[ck]===undefined || (bk>=ks[0] && m.map[bk]===undefined);
+  });
+}
+function monthEndFromDaily(ts,px){
+  const out={};
+  for(let i=0;i<ts.length;i++){
+    const v=px[i]; if(typeof v!=="number"||!isFinite(v)) continue;
+    out[new Date(ts[i]*1000).toISOString().slice(0,7)]=v;   /* 後勝ち＝各月の最終営業日 */
+  }
+  return out;
+}
+async function fillGapLazy(){
+  const list=gapTargets().filter(function(tk){ return (GAP_TRIED[tk]||0)<3; });
+  if(!list.length) return;
+  const p1=Math.floor(Date.UTC(YR-2,5,1)/1000), p2=Math.floor(Date.now()/1000);
+  let changed=0;
+  await Promise.all(list.map(async function(tk){
+    const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)
+          +"?period1="+p1+"&period2="+p2+"&interval=1d";
+    let r=await fetchDirect(u,3500);
+    if(!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+u,5000); }catch(e){} }
+    let ok=false;
+    if(r.body){
+      try{
+        const j=jsonOf(r.body);
+        const res=j&&j.chart&&j.chart.result&&j.chart.result[0];
+        const ts=res&&res.timestamp;
+        const px=(res&&res.indicators&&res.indicators.quote&&res.indicators.quote[0]&&res.indicators.quote[0].close)||[];
+        if(ts&&ts.length){
+          const me=monthEndFromDaily(ts,px), cd=CDATA[tk];
+          const keys=Object.keys(me).sort().slice(-20);
+          keys.forEach(function(k){ cd.map[k]=me[k]; });   /* 月ずれも上書きで矯正 */
+          changed++; ok=true;
+        }
+      }catch(e){}
+    }
+    if(ok) GAP_TRIED[tk]=0; else GAP_TRIED[tk]=(GAP_TRIED[tk]||0)+1;
+    try{ render(); }catch(e){}
+  }));
+  if(changed){ try{ saveSnap(); }catch(e){} }
+}
+function maybeFillGap(){
+  if(GAP_RUNNING) return;
+  if(!gapTargets().length) return;       /* 穴が無ければ何もしない＝通常時のコストゼロ */
+  GAP_RUNNING=true;
+  setTimeout(function(){
+    (async function(){
+      try{ await fillGapLazy(); }catch(e){}
+      GAP_RUNNING=false;
+    })();
+  },80);
+}
+
 function maybeFillDec(){
   if(!decTabActive() || DEC_FILL_RUNNING) return;
   DEC_FILL_RUNNING=true;
@@ -1327,7 +1483,7 @@ async function fetchEmBatch(list){
 }
 async function fetchEm(tk){
   const code=EMCODES[tk]; if(!code) return null;
-  const d0=(YR-1)+"1101", d1=YR+pad2(MO)+pad2(NOW.getDate());
+  const d0=(YR-2)+"0601", d1=YR+pad2(MO)+pad2(NOW.getDate());
   const u="https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=171."+code
         +"&fields1=f1,f2,f3,f4&fields2=f51,f53&klt=103&fqt=0&beg="+d0+"&end="+d1;
   let r=await fetchDirect(u,600);                    /* ブラウザ直が最速。実機ブラウザならここで返る */
@@ -1346,7 +1502,7 @@ async function fetchEm(tk){
 /* Eurostat（EMU convergence criterion・月次・10年）。ECBが固まったときの保険 */
 async function eurostat10(){
   try{
-    const eu="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_lt_mcby_m?geo=EA&sinceTimePeriod="+(YR-1)+"-11&format=JSON";
+    const eu="https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_lt_mcby_m?geo=EA&sinceTimePeriod="+(YR-2)+"-06&format=JSON";
     const r=await Promise.any([fetchDirect(eu,T.ecb),fetchDirect(eu,T.ecb)]
       .map(function(pr){ return pr.then(function(x){ if(!x.body) throw 0; return x; }); }))
       .catch(function(){ return {status:-1,body:null}; });
@@ -1481,7 +1637,7 @@ async function fetchRates(prog){
         else{
           try{
             const u="https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=171."+tk
-              +"&fields1=f1,f2,f3,f4&fields2=f51,f53&klt=103&fqt=0&beg="+(y-1)+"1201&end="+y+pad2(MO)+pad2(NOW.getDate());
+              +"&fields1=f1,f2,f3,f4&fields2=f51,f53&klt=103&fqt=0&beg="+(y-2)+"0601&end="+y+pad2(MO)+pad2(NOW.getDate());
             const r=await fetchDirect(u,T.em);
             if(r.body){
               const body=textOf(r.body), a=body.indexOf("{");
@@ -1502,50 +1658,8 @@ async function fetchRates(prog){
   /* ユーロ圏：ECB（同じ要求を2本同時に投げて先着を採用＝固まる個体を回避）。10年はEurostatで補完 */
   if(rn.indexOf("EU2Y")>=0||rn.indexOf("EU10Y")>=0){
     jobs.push((async function(){
-      const base="https://data-api.ecb.europa.eu/service/data/YC/B.U2.EUR.4F.G_N_A.SV_C_YM.";
-      async function one(ser,tk){
-        const u=base+ser+"?startPeriod="+(y-1)+"-11-01&format=csvdata&detail=dataonly";
-        try{
-          let r=await fetchDirect(u,3000);                 /* ECB直は実測1.2秒・25KB */
-          if(!r.body) r=await fetchDirect(u,3000);
-          if(!r.body) r=await fetchWithJina(u,4000,7000);  /* CORS不可環境の保険 */
-          if(!r.body) throw 0;
-          const daily={}; let it=-1, iv=-1, hdr=false;
-          r.body.split(/\r?\n/).forEach(function(line){
-            if(!line.trim()) return;
-            const c=parseCsvLine(line);
-            if(!hdr){ const j=c.indexOf("TIME_PERIOD"); if(j>=0){ it=j; iv=c.indexOf("OBS_VALUE"); hdr=true; } return; }
-            if(it<0||iv<0) return;
-            const t=c[it]||"", v=parseFloat(c[iv]);
-            if(isFinite(v)&&/^\d{4}-\d{2}-\d{2}/.test(t)) daily[t.slice(0,10)]=v;
-          });
-          const mo=monthlyFromDaily(daily);
-          if(mo){ setRate(tk,mo,"ECB"); SRCS["ECB"]=(SRCS["ECB"]||0)+1; return true; }
-        }catch(e){}
-        return false;
-      }
-      /* 実測が速い順：10年は Eurostat(549ms)→DBnomics(2.4s)→ECB。2年は DBnomics(2.4s)→ECB */
-      const race=function(ser,tk){
-        /* 10年は Eurostat(549ms)を筆頭に順次。2年はECB(実測812ms)とDBnomics(2.4s)を並列競争させ先着採用 */
-        if(tk!=="EU10Y"){
-          /* DBnomics（ECB系列・基準日が1日前）を第一候補。ECB直は基準日が古い場合があるため保険に降格 */
-          return fetchDbn(ser,tk).then(function(r){
-            if(r) return true;
-            return Promise.any([one(ser,tk),one(ser,tk)]
-              .map(function(pr){ return pr.then(function(x){ if(!x) throw 0; return true; }); }))
-            .then(function(){ return true; }).catch(function(){ return false; });
-          });
-        }
-        const chain=[function(){ return eurostat10(); }, function(){ return fetchDbn(ser,tk); }, function(){ return one(ser,tk); }];
-        let i=0;
-        const step=function(){
-          if(i>=chain.length) return Promise.resolve(false);
-          return Promise.resolve(chain[i++]()).then(function(r){ return r===false||r===0 ? step() : true; })
-                 .catch(function(){ return step(); });
-        };
-        return step();
-      };
-      await Promise.all([race("SR_2Y","EU2Y"), race("SR_10Y","EU10Y")]);
+      markPend(["EU2Y","EU10Y"],true);
+      try{ await fetchEuRates(); }catch(e){}
       prog();
     })());
   }
@@ -1741,6 +1855,8 @@ function show(pi,fromUser){
   renderNav();
   window.scrollTo(0,0);
   try{ maybeFillDec(); }catch(e){}
+  try{ maybeFillOld(); }catch(e){}
+  try{ maybeFillGap(); }catch(e){}
   try{ rateBaseFix(); }catch(e){}
   render();
   const need=needsFetch().length+needsRates().length;
