@@ -43,12 +43,21 @@ body{
 #tabs{
   position:fixed;top:0;left:0;right:0;z-index:60;
   display:flex;overflow-x:auto;
+  cursor:grab;touch-action:pan-y;overscroll-behavior-x:contain;
   background:var(--card);border-bottom:1px solid var(--line);
   scrollbar-width:none;padding:0 0 0 4px;
   padding-top:env(safe-area-inset-top,0px);
   -webkit-overflow-scrolling:touch;
 }
 #tabs::-webkit-scrollbar{display:none}
+#tabs.dragging{cursor:grabbing}
+#tabs.dragging button{pointer-events:none}
+#tabs.hscroll{mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%)}
+#tabs.hscroll.atstart{mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 14px),transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 14px),transparent 100%)}
+#tabs.hscroll.atend{mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 100%)}
 #tabs button{
   flex:0 0 auto;background:none;border:0;color:var(--tx2);
   font:inherit;font-size:11.5px;font-weight:700;letter-spacing:.01em;
@@ -185,6 +194,11 @@ body{
 .chov{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center;
   background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
 .chov[hidden]{display:none}
+.chsheet.hmmode{background:#000;border-color:#2a3138}
+.chsheet.hmmode .chhd b,.chsheet.hmmode .chft{color:#e9eef5}
+.chsheet.hmmode .chft{color:#9aa4b2}
+.hmhit{cursor:pointer}
+.hmhit:hover{filter:brightness(1.06)}
 .chsheet{width:100%;max-width:520px;background:var(--card);border:1px solid var(--line);
   border-radius:14px 14px 0 0;padding:12px 14px calc(14px + env(safe-area-inset-bottom));
   box-shadow:0 -8px 32px rgba(0,0,0,.35);animation:chup .18s ease-out}
@@ -202,6 +216,7 @@ body{
 .chft{margin-top:8px;font-size:9.5px;color:var(--tx2);line-height:1.5;min-height:14px}
 .chft b{color:var(--tx);font-weight:700}
 
+.d1dt{display:inline-block;margin-left:3px;font-size:8.5px;font-weight:700;font-style:normal;color:var(--tx2);border-radius:3px;padding:0 3px;line-height:1.35;vertical-align:middle;background:rgba(128,128,128,.16)}
 </style>
 </head>
 <body>
@@ -241,7 +256,7 @@ const SECTIONS=[
  {t:"S&P500セクターETF",col:1,items:[["一般消費財","XLY","hl"],["生活必需品","XLP","hl"],["エネルギー","XLE","hl"],["金融","XLF","hl"],["ヘルスケア","XLV","hl"],["工業","XLI","hl"],["素材","XLB","hl"],["テクノロジー","XLK","hl"],["通信サービス","XLC","hl"],["公益","XLU","hl"],["不動産","XLRE","hl"]]},
  {t:"主要国株式指数",col:2,items:[['日本',"^N225","日経平均","hl"],["インド","^BSESN","SENSEX"],["中国","000001.SS","上海総合"],["香港","^HSI","ハンセン"],["ドイツ","^GDAXI","DAX"],["英国","^FTSE","FTSE100"],["フランス","^FCHI","CAC40"],["イタリア","FTSEMIB.MI","FTSE MIB"],["スペイン","^IBEX","IBEX35"],["カナダ","^GSPTSE","TSX"],["豪州","^AXJO","ASX200"],["ブラジル","^BVSP","ボベスパ"],["メキシコ","^MXX","IPC"],["南アフリカ","EZA","南アフリカETF"],["中東","EIS","中東ETF"],["新興国","EEM","新興国ETF"]]},
  {t:"その他のETF",col:2,items:[["半導体株","SMH"],["VIX","^VIX"],["PCC","PCC"]]},
- {t:"コモディティETF",col:3,items:[["コモディティ全般(DBC)","DBC"],["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["金属鉱山(XME)","XME"],["プラチナ(PPLT)","PPLT"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
+ {t:"コモディティETF",col:3,items:[["コモディティ全般(DBC)","DBC"],["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["プラチナ(PPLT)","PPLT"],["金属鉱山(XME)","XME"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
   {t:"暗号通貨",col:3,items:[["ビットコイン/ドル","BTC-USD"],["イーサリアム/ドル","ETH-USD"],["リップル/ドル","XRP-USD"],["ライトコイン/ドル","LTC-USD"],["ソラナ/ドル","SOL-USD"],["ドージコイン/ドル","DOGE-USD"],["カルダノ/ドル","ADA-USD"],["チェーンリンク/ドル","LINK-USD"],["BNB/ドル","BNB-USD"],["アバランチ/ドル","AVAX-USD"],["ビットコイン/円","BTC-JPY"],["イーサリアム/円","ETH-JPY"],["リップル/円","XRP-JPY"]]}
 ];
 /* 分配金込み（調整後終値）で取得する要素＝債券7＋DVY。それ以外は一括API（価格ベース） */
@@ -275,10 +290,17 @@ const PERIODS=[{id:"ytd",label:"年初来",partial:false}].concat((function(){
   const a=[];
   for(let k=17;k>=0;k--){
     const d=new Date(YR,MO-1-k,1), y=d.getFullYear(), m=d.getMonth()+1;
-    a.push({id:y+"-"+pad2(m),label:m+"月",ym:y,mm:m,partial:(y===YR&&m===MO),ly:(y!==YR)});
+    /* 年が分かる位置だけ年を出す：先頭の月と1月は「YY年XX月」、それ以外は「XX月」 */
+    const yy=String(y).slice(2);
+    const showY=(k===17)||(m===1);
+    a.push({id:y+"-"+pad2(m),label:(showY? yy+"年"+m+"月" : m+"月"),ym:y,mm:m,
+            partial:(y===YR&&m===MO),ly:false});
   }
+  a.push({id:"d1",label:"最新1日",d1:true,partial:false});
   return a;
 })());
+/* 既定タブ＝最後の「月」タブ（末尾に追加した最新1日は初期表示に使わない） */
+function defTab(){ for(let i=PERIODS.length-1;i>=0;i--){ if(PERIODS[i].mm) return i; } return 0; }
 /* 逆数で算出する銘柄（USDEUR は EURUSD の逆数で厳密に計算する） */
 const INVTK={"USDEUR":1};
 const BASE_TITLE="各国名目・実質金利・指数・債券・コモディティ・暗号通貨まとめ";
@@ -320,7 +342,7 @@ const DEFS  = {
 "USO":"WTI原油先物に連動するETF（United States Oil Fund）。原油価格そのものの値動きを追う。",
 "SIL":"銀鉱山株ETF（Global X Silver Miners）。銀価格に連動する鉱山企業群。",
 "COPX":"銅鉱山株ETF（Global X Copper Miners）。銅価格に連動する鉱山企業群。",
-"XME":"金属鉱山ETF（SPDR S&P Metals & Mining）。石炭・鉄鋼・貴金属・銅などの鉱山会社に幅広く投資。プラチナ専業の上場ETFは存在しない。",
+"XME":"金属鉱山ETF（SPDR S&P Metals & Mining）。石炭・鉄鋼・貴金属・銅などの鉱山会社に幅広く投資する。プラチナ専業の上場ETFは存在しないため、プラチナはPPLT（現物）で見る。",
 "PPLT":"プラチナ現物ETF（abrdn Physical Platinum Shares）。プラチナ地金の価格に連動。",
 "CPER":"銅先物に連動するETF（United States Copper Index Fund）。銅は景気敏感で「Dr. Copper」とも呼ばれる。",
 "WEAT":"小麦先物に連動するETF（Teucrium Wheat Fund）。天候・輸出規制の影響を受けやすい。",
@@ -423,6 +445,7 @@ function isHL(it){ return it.indexOf("hl")>=0; }
 /* ================= 期間・基準の記述 ================= */
 function pdesc(p){
   if(p.id==="ytd") return "前年末終値比";
+  if(p.d1){ const d=p.date||d1ActualDate(); return "前営業日終値 → "+(d? d+" 終値":"最新終値")+"（この日付のデータ）"; }
   const m=p.mm, pre=(m===1? "前年末" : (m-1)+"月末")+"終値 → ";
   return pre + (p.partial? "最新値（月中・他月より短い期間）" : m+"月末終値");
 }
@@ -449,6 +472,7 @@ function nearBefore(map,key){
 }
 function valForPage(m,p,tk){
   if(!m) return null;
+  if(p.d1){ if(D1SKIP[tk]) return null; return (typeof m.d1==="number"&&isFinite(m.d1))? +m.d1.toFixed(2) : (D1_FIN? null : undefined); }
   if(p.id==="ytd"){
     let b=m.map[(YR-1)+"-12"];
     if(b===undefined) b=decGet(tk);
@@ -469,13 +493,16 @@ function valForPage(m,p,tk){
   }
   return (b&&c)? +(INVTK[tk]? (b/c-1)*100 : (c/b-1)*100).toFixed(2) : null;
 }
-function pageVals(){
+function pageVals(){ const __r=pageValsInner(); try{ window.__V=__r; }catch(e){} return __r; }
+function pageValsInner(){
   const p=PERIODS[CUR], out={};
   ALL.forEach(function(tk){
     const m=CDATA[tk];
     /* 通信中は常に「取得中」。期限超過かつ通信が終わっている場合のみ「取得できません」 */
     if(!m){ out[tk]= (pastDL() && !PENDING[tk] && TRIED[tk])? null : undefined; return; }
-    if(m.rr){ const b=m.map? (m.map[(YR-1)+"-12"]!==undefined? m.map[(YR-1)+"-12"] : decGet(tk)) : undefined;
+    if(m.rr){
+      if(p.d1) return (typeof m.d1pt==="number"&&isFinite(m.d1pt))? +m.d1pt.toFixed(2) : (D1_FIN? null : undefined);
+      const b=m.map? (m.map[(YR-1)+"-12"]!==undefined? m.map[(YR-1)+"-12"] : decGet(tk)) : undefined;
       out[tk]=(typeof b==="number"&&typeof m.last==="number")? +(m.last-b).toFixed(2) : null; return; }
     out[tk]=valForPage(m,p,tk);
   });
@@ -483,6 +510,18 @@ function pageVals(){
 }
 
 /* ================= 描画 ================= */
+/* 最新1日タブで「その行の日付」がタブ名の日付と違う場合に添える小さな日付バッジ。
+   例：価格は11/9だが米財務省・ECBの金利は11/6 → 行に「11/6」と出して取り違えを防ぐ */
+function d1Badge(tk){
+  try{
+    const p=PERIODS[CUR]; if(!p||!p.d1) return "";
+    const m=CDATA[tk]; if(!m) return "";
+    const d=m.d1d||(m.rate? m.asof : null);
+    if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d)) return "";
+    if(!p.date||d===p.date) return "";
+    return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10)+"</i>";
+  }catch(e){ return ""; }
+}
 function rowHtml(it,V,mx,hasData){
   const n=it[0], tk=it[1], v=V[tk], cd=CDATA[tk];
   const dv=it.indexOf("dv")>=0? (cd&&cd.adj===false
@@ -505,9 +544,9 @@ function rowHtml(it,V,mx,hasData){
   const rt=(it[3]==="rt"&&cd&&typeof cd.last==="number")
     ? "<i class=\"rt\" title=\"直近の"+tn+"国債利回り（出所："+(RSRC[tk]||"-")+"）\"><u>"+tn+"国債</u> "+cd.last.toFixed(2)+"%<b class=\"src\">"+(SRCABBR[RSRC[tk]]||"?")+"</b></i>":"";
   void SRCABBR;
-  const nm="<div class=\"nm\">"+esc(n)+dv+rt+"</div>";
+  const nm="<div class=\"nm\">"+esc(n)+dv+rt+d1Badge(tk)+"</div>";
   if(v===undefined){
-    const left=Math.max(0,Math.ceil((FETCH_DL-Date.now())/1000));
+    const left=(PERIODS[CUR]&&PERIODS[CUR].d1)? d1Left() : Math.max(0,Math.ceil((FETCH_DL-Date.now())/1000));
     return "<div class=\"row\" data-tk=\""+tk+"\">"+nm+"<div class=\"vl na\">取得中 残り"+left+"秒</div><div class=\"bar\"></div></div>";
   }
   if(v===null) return "<div class=\"row\" data-tk=\""+tk+"\">"+nm+"<div class=\"vl na\">取得できません</div><div class=\"bar\"></div></div>";
@@ -608,8 +647,10 @@ function setStatus(cls,html,prog){
 setInterval(function(){
   let anyUndef=false;
   for(let i=0;i<ALL.length;i++){ if(!CDATA[ALL[i]] && (!pastDL()||PENDING[ALL[i]])){ anyUndef=true; break; } }
+  try{ d1Sync(); }catch(e){}
   if(anyUndef){ FINAL_TICK=false; try{ render(false); }catch(e){} }
   else if(!FINAL_TICK){ FINAL_TICK=true; try{ render(false); }catch(e){} }
+  try{ d1Sync(); }catch(e){}
 },1000);
 let rt; window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ try{localStorage.removeItem(FITKEY);}catch(e){} fitNames(); },150); });
 
@@ -978,9 +1019,16 @@ function textOf(t){
 }
 function monthlyFromDaily(daily){
   const keys=Object.keys(daily).sort(), map={}; let last=null, asof="";
+  let d1, d1pt;
+  if(keys.length>=2){
+    const a=daily[keys[keys.length-2]], b=daily[keys[keys.length-1]];
+    if(typeof a==="number"&&typeof b==="number"&&isFinite(a)&&isFinite(b)&&a!==0){
+      d1=+(((b/a)-1)*100).toFixed(2); d1pt=+(b-a).toFixed(2);
+    }
+  }
   keys.forEach(function(k){ const v=daily[k];
     if(typeof v==="number"&&isFinite(v)){ map[k.slice(0,7)]=v; last=v; asof=k; } });
-  return last===null? null : {map:map,last:last,asof:asof,rate:true};
+  return last===null? null : {map:map,last:last,asof:asof,rate:true,d1:d1,d1pt:d1pt};
 }
 const RSRC={};
 /* ===== 前年12月の水準キャッシュ（二度と変わらない値なので永久保存） =====
@@ -994,6 +1042,15 @@ function harvestDec(tk){ const m=CDATA[tk]; if(!m||!m.map) return; const v=m.map
 
 function setRate(tk,obj,src){
   if(!obj) return;
+  /* 日次騰落率(d1/d1pt)の引き継ぎ。
+     東財の一括クォートは「現在値」だけを返すため、そのまま CDATA[tk] を置き換えると
+     直前に算出した d1 が消える（実測：JP/IN/CN/DE/GB/BR/KR の「最新1日」が全滅し、
+     財務省CSVとECBを使う米・ユーロ圏だけ残った）。新しい値が無い場合は旧値を保持する。 */
+  const prev=CDATA[tk];
+  if(prev&&prev!==obj){
+    if(typeof obj.d1!=="number"&&typeof prev.d1==="number"){ obj.d1=prev.d1; if(prev.d1d) obj.d1d=prev.d1d; }
+    if(typeof obj.d1pt!=="number"&&typeof prev.d1pt==="number") obj.d1pt=prev.d1pt;
+  }
   CDATA[tk]=obj; if(src) RSRC[tk]=src; if(obj.asof>ASOF) ASOF=obj.asof;
   try{ harvestDec(tk); }catch(e){}
   if(REALKEYS.indexOf(tk)<0 && typeof recomputeReal==="function") recomputeReal();
@@ -1006,6 +1063,8 @@ function mergeRate(tk,obj,src){
   const cur=CDATA[tk];
   if(!cur||!cur.map){ setRate(tk,obj,src); return; }
   Object.keys(obj.map).forEach(function(k){ if(cur.map[k]===undefined) cur.map[k]=obj.map[k]; });
+  if(typeof obj.d1==="number"&&isFinite(obj.d1)){ cur.d1=obj.d1; if(obj.d1d) cur.d1d=obj.d1d; }
+  if(typeof obj.d1pt==="number"&&isFinite(obj.d1pt)) cur.d1pt=obj.d1pt;
   if(typeof obj.last==="number" && obj.asof && (!cur.asof || obj.asof>cur.asof)){ cur.last=obj.last; cur.asof=obj.asof; }
   try{ harvestDec(tk); }catch(e){}
   try{ renderSoon(); }catch(e){}
@@ -1547,20 +1606,36 @@ async function fetchEmBatch(list){
 async function fetchEm(tk){
   const code=EMCODES[tk]; if(!code) return null;
   const d0=(YR-2)+"0601", d1=YR+pad2(MO)+pad2(NOW.getDate());
-  const u="https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=171."+code
-        +"&fields1=f1,f2,f3,f4&fields2=f51,f53&klt=103&fqt=0&beg="+d0+"&end="+d1;
-  let r=await fetchDirect(u,600);                    /* ブラウザ直が最速。実機ブラウザならここで返る */
-  for(let i=0;i<2 && !r.body;i++) r=await fetchRaw("https://r.jina.ai/"+u,T.em);  /* 遮断/401時はプロキシで再試行 */
-  if(!r.body) return null;
-  try{
-    const body=textOf(r.body), a=body.indexOf("{"); 
-    const j=JSON.parse(a>0? body.slice(a,body.lastIndexOf("}")+1) : body);
-    const k=(j&&j.data&&j.data.klines)||[], daily={};
-    k.forEach(function(line){ const p=String(line).split(","); if(p.length<2) return;
-      const v=parseFloat(p[1]); if(isFinite(v)) daily[p[0]]=v; });
-    const mo=monthlyFromDaily(daily);
-    return mo;
-  }catch(e){ return null; }
+  /* 日足(klt=101)を主経路にする。月足(103)は銘柄によって空を返し（実測：IN2Y・CN10Y が0件、
+     GB系はわずか数本）、返っても「最新1日」の騰落率は作れない。
+     日足なら 月初来の水準と 前日→当日の騰落率 を同時に作れる。 */
+  const IVS=[101,103,102];
+  for(let vi=0; vi<IVS.length; vi++){
+    const u="https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=171."+code
+          +"&fields1=f1,f2,f3,f4&fields2=f51,f53&klt="+IVS[vi]+"&fqt=0&beg="+d0+"&end="+d1;
+    let r=null;
+    try{ r=await fetchDirect(u, vi===0?2500:1200); }catch(e){ r=null; }
+    for(let i=0;i<2 && (!r||!r.body);i++){ try{ r=await fetchRaw("https://r.jina.ai/"+u,T.em); }catch(e){} }
+    if(!r||!r.body) continue;
+    try{
+      const body=textOf(r.body), a=body.indexOf("{");
+      const j=JSON.parse(a>0? body.slice(a,body.lastIndexOf("}")+1) : body);
+      const k=(j&&j.data&&j.data.klines)||[], daily={};
+      k.forEach(function(line){ const p=String(line).split(","); if(p.length<2) return;
+        const v=parseFloat(p[1]); if(isFinite(v)) daily[p[0]]=v; });
+      if(Object.keys(daily).length<2) continue;
+      const mo=monthlyFromDaily(daily);
+      if(mo){
+        /* 月足しか取れなかった場合は「最新1日」を出さない。
+           月次キー（YYYY-MM）から作った変化を日次として表示すると誤った数字になるため、
+           d1 を捨てて「取得できません」に倒す（黙って間違えるより欠測が正しい）。 */
+        const ks=Object.keys(daily);
+        if(!(ks.length&&/^\d{4}-\d{2}-\d{2}$/.test(ks[ks.length-1]))){ delete mo.d1; delete mo.d1pt; }
+        mo.iv=IVS[vi]; return mo;
+      }
+    }catch(e){}
+  }
+  return null;
 }
 /* Eurostat（EMU convergence criterion・月次・10年）。ECBが固まったときの保険 */
 async function eurostat10(){
@@ -1634,7 +1709,8 @@ function recomputeReal(){
     if(!nom||!inf||typeof nom.last!=="number") return;
     const map={};
     Object.keys(nom.map||{}).forEach(function(k){ map[k]=+(nom.map[k]-inf.v).toFixed(3); });
-    setRate(rk,{map:map,last:+(nom.last-inf.v).toFixed(3),asof:nom.asof,rate:true,rr:true,inf:inf.v,infY:inf.y},"実質=名目−CPI");
+    setRate(rk,{map:map,last:+(nom.last-inf.v).toFixed(3),asof:nom.asof,rate:true,rr:true,inf:inf.v,infY:inf.y,
+      d1:nom.d1,d1pt:(typeof nom.d1pt==="number")? nom.d1pt : undefined},"実質=名目−CPI");
   });
 }
 async function fetchRates(prog){
@@ -1744,7 +1820,12 @@ async function fetchRates(prog){
         prog();
       });
       /* [2] 月次ヒストリ（年初比の基準・各月ページ用）は背後で埋める。既に基準があれば急がない */
-      const need=emList.filter(function(tk){ return !hasBase(CDATA[tk]) || snapStale(); });
+      /* 日次騰落率(d1)を持っていない銘柄も取り直す対象に含める。
+         一括クォートだけでは d1 を作れないため、ここを省くと「最新1日」が永久に空になる。 */
+      const need=emList.filter(function(tk){
+        const m=CDATA[tk];
+        return !hasBase(m) || snapStale() || !m || typeof m.d1!=="number";
+      });
       /* 中・韓・伯は配信元が不安定で空応答を返すことがある（実測：KR10Y が4回連続で空）。
          1回で諦めず、2秒あけて最大3回まで取り直す。 */
       async function fetchEmRetry(tk){
@@ -1929,6 +2010,7 @@ function show(pi,fromUser){
   try{ maybeFillDec(); }catch(e){}
   try{ maybeFillOld(); }catch(e){}
   try{ maybeFillGap(); }catch(e){}
+  try{ if(PERIODS[CUR]&&PERIODS[CUR].d1){ setTimeout(function(){ CDATA.__nothing=1; fillD1(false).catch(function(){}); },60); } }catch(e){}
   try{ rateBaseFix(); }catch(e){}
   render();
   const need=needsFetch().length+needsRates().length;
@@ -1945,7 +2027,7 @@ function renderNav(){
   document.getElementById("pnav").innerHTML="<span class=\"cap\">ページ</span>"+PERIODS.map(function(p,i){
     const lbl=esc(p.label)+(p.partial? "<sup>月中</sup>":"");
     if(p.off) return "<a class=\"off\" aria-disabled=\"true\">"+lbl+"</a>";
-    return "<a href=\"#"+p.id+"\" data-i=\""+i+"\" class=\""+(i===CUR?"on":"")+"\" aria-current=\""+(i===CUR?"page":"false")+"\">"+lbl+"</a>";
+    return "<a href=\"#"+p.id+"\" data-i=\""+i+"\""+(p.d1?" data-d1=\"1\"":"")+" class=\""+(i===CUR?"on":"")+"\" aria-current=\""+(i===CUR?"page":"false")+"\">"+lbl+"</a>";
   }).join("");
   const act=document.querySelector("#pnav a.on");
   if(act&&act.scrollIntoView) try{ act.scrollIntoView({inline:"center",block:"nearest"}); }catch(e){}
@@ -2127,6 +2209,450 @@ document.addEventListener("click",function(e){
 },true);
 document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&CHART_TK) closeChart(); });
 
+/* ===== セクション見出しクリック → ヒートマップ（面積＝騰落率の絶対値） =====
+   行クリックの月次グラフとは完全に独立。見出しだけをタップ領域にする。
+   ・面積は |騰落率| に比例（最小3%・大きさは再正規化して合計100%）
+   ・プラス＝緑／マイナス＝赤（濃淡は既存の絶対スケールと同じ）
+   ・黒背景・角丸なしのベタ塗り・白文字＝フィンビズ系の見た目 */
+/* 文字幅の推定（全角=fs、半角=fs*0.55）。はみ出し判定に使う */
+function hmEstW(s,fs){
+  let w=0;
+  for(let i=0;i<s.length;i++){
+    const c=s.charCodeAt(i);
+    const wide=(c>=0x1100&&c<=0x115F)||(c>=0x2E80&&c<=0xA4CF)||(c>=0xAC00&&c<=0xD7A3)
+      ||(c>=0xF900&&c<=0xFAFF)||(c>=0xFE30&&c<=0xFE6F)||(c>=0xFF00&&c<=0xFF60)||(c>=0xFFE0&&c<=0xFFE6);
+    w+=wide? fs : fs*0.55;
+  }
+  return w;
+}
+/* 与えられた幅に必ず収める：縮小→省略の順。収まらなければ null（描かない） */
+function hmFit(txt,aw,fsMax,fsMin){
+  if(!txt||aw<=0) return null;
+  let t=txt, fs=fsMax, w=hmEstW(t,fs);
+  if(w>aw){ fs=fs*aw/w; w=hmEstW(t,fs); }
+  if(w>aw && fs<fsMin){ fs=fsMin; w=hmEstW(t,fs); }
+  if(w>aw){
+    while(t.length>1 && hmEstW(t+"…",fs)>aw) t=t.slice(0,-1);
+    if(!t.length) return null;
+    t=t+"…"; w=hmEstW(t,fs);
+    if(w>aw) fs=fs*aw/w;
+  }
+  if(fs<fsMin-0.2) return null;
+  return {t:t,fs:fs,w:hmEstW(t,fs)};
+}
+let __hclip=0;
+/* スクエア型ツリーマップ（squarified treemap）。
+   list=[{k,area}] を受け、与えた矩形を隙間なく分割した [{k,x,y,w,h}] を返す。
+   面積＝騰落率の絶対値に比例させるため、辺の長さは sqrt ではなく
+   「最悪アスペクト比が最小になる行」を選ぶ squarify で決める。 */
+function hmSquarify(list,x,y,w,h,out){
+  out=out||[];
+  if(!list||!list.length) return out;
+  const it=list.slice().sort(function(a,b){ return b.area-a.area; });
+  const tot=it.reduce(function(a,b){ return a+b.area; },0);
+  if(!(tot>0)||!(w>0)||!(h>0)) return out;
+  const k=(w*h)/tot;
+  it.forEach(function(t){ t._a=Math.max(1e-9,t.area*k); });
+  let X=x, Y=y, W=w, H=h, i=0;
+  while(i<it.length && W>0.05 && H>0.05){
+    const side=Math.min(W,H), vert=(W>=H);   /* vert=縦1列を作る */
+    let sum=0, best=null, bestN=1;
+    for(let n=1;n<=it.length-i;n++){
+      sum+=it[i+n-1]._a;
+      const thick=sum/side;
+      let worst=0;
+      for(let t=0;t<n;t++){
+        const other=it[i+t]._a/thick;
+        const ar=Math.max(thick/other, other/thick);
+        if(ar>worst) worst=ar;
+      }
+      if(best===null||worst<=best){ best=worst; bestN=n; } else break;
+    }
+    let s=0;
+    for(let t=0;t<bestN;t++) s+=it[i+t]._a;
+    let thick=s/side;
+    if(!(thick>0)) break;
+    if(thick>side) thick=side;
+    if(vert){
+      let yy=Y;
+      for(let t=0;t<bestN;t++){
+        let hh=(t===bestN-1)? (Y+H-yy) : it[i+t]._a/thick;
+        if(hh<0) hh=0;
+        out.push({k:it[i+t].k,x:X,y:yy,w:thick,h:hh});
+        yy+=hh;
+      }
+      X+=thick; W-=thick;
+    }else{
+      let xx=X;
+      for(let t=0;t<bestN;t++){
+        let ww=(t===bestN-1)? (X+W-xx) : it[i+t]._a/thick;
+        if(ww<0) ww=0;
+        out.push({k:it[i+t].k,x:xx,y:Y,w:ww,h:thick});
+        xx+=ww;
+      }
+      Y+=thick; H-=thick;
+    }
+    i+=bestN;
+  }
+  return out;
+}
+/* 色：プラス＝緑／マイナス＝赤。濃淡は Math.sqrt(|v|/dom) の0.75乗（絶対スケール・黒背景前提） */
+function hmColor(v,dom){
+  const d=(typeof dom==="number"&&dom>0)?dom:20;
+  let a=Math.min(1,Math.sqrt(Math.min(1,Math.abs(v)/d)));
+  a=Math.pow(a,0.75);
+  const mix=function(c1,c2,t){
+    return "rgb("+Math.round(c1[0]+(c2[0]-c1[0])*t)+","
+                 +Math.round(c1[1]+(c2[1]-c1[1])*t)+","
+                 +Math.round(c1[2]+(c2[2]-c1[2])*t)+")";
+  };
+  if(!(typeof v==="number")||!isFinite(v)) return "rgb(40,46,54)";
+  return v>=0? mix([8,52,28],[32,214,120],a) : mix([62,10,12],[238,58,58],a);
+}
+function drawHeat(secIdx){ try{ return drawHeatInner(secIdx); }catch(err){
+  const b=document.getElementById("chw");
+  if(b) b.innerHTML="<div style=\"padding:22px 8px;text-align:center;color:#ee3a3a;font-size:10.5px;line-height:1.6\">"
+    +"ヒートマップの描画でエラーが発生しました<br>"+esc(String((err&&err.message)||err))+"</div>";
+} }
+function drawHeatInner(secIdx){
+  const s=SECTIONS[secIdx], p=PERIODS[CUR];
+  const V=(window.__V||((typeof pageVals==="function")? pageVals():{}));
+  const WS=(typeof wScale==="function")? wScale():null;
+  const dom=(WS&&WS[secIdx])||20;
+  const rows=[];
+  s.items.forEach(function(it){
+    const v=V[it[1]];
+    if(typeof v==="number"&&isFinite(v)) rows.push({nm:it[0],tk:it[1],v:v});
+  });
+  const hd=document.getElementById("cht"), sb=document.getElementById("chs"), box=document.getElementById("chw"), ft=document.getElementById("chft");
+  if(hd) hd.textContent=s.t+"　ヒートマップ";
+  if(sb) sb.textContent=p.label+"の騰落率／面積は騰落率の絶対値に比例（最小3%）";
+  if(!rows.length){
+    box.innerHTML="<div style=\"padding:26px 0;text-align:center;color:#9aa4b2;font-size:11px\">この期間の数値がまだありません</div>";
+    if(ft) ft.textContent="";
+    return;
+  }
+  const W=340, HT=196, LEG=24, H=HT+LEG;     /* 凡例は HT より下の帯にだけ描く */
+  /* 最小寸法を確保するため、下限3%を必要なら段階的に引き上げて再配置する
+     （極端に細いスリット状のタイルを作らない＝文字が入らない箱を作らない） */
+  let out=null, floor=0.03;
+  for(let tryN=0; tryN<8; tryN++){
+    const raw=rows.map(function(r){ return Math.max(1e-6,Math.abs(r.v)); });
+    const tot=raw.reduce(function(a,b){ return a+b; },0);
+    let wt=raw.map(function(x){ return Math.max(x/tot, floor); });
+    const sm=wt.reduce(function(a,b){ return a+b; },0);
+    wt=wt.map(function(x){ return x/sm; });
+    const list=wt.map(function(a,i){ return {k:i,area:a*W*HT}; });
+    list.sort(function(a,b){ return b.area-a.area; });
+    const o=hmSquarify(list,0,0,W,HT,[]);
+    out=o;
+    const minDim=Math.min.apply(null,o.map(function(t){ return Math.min(t.w,t.h); }));
+    if(minDim>=16) break;
+    floor*=1.35;
+  }
+  __hclip++;
+  let g="",defs="";
+  out.forEach(function(t,ti){
+    const d=rows[t.k], v=d.v;
+    const P=0.6;
+    const x=t.x+P, y=t.y+P, w2=Math.max(0.4,t.w-P*2), h2=Math.max(0.4,t.h-P*2);
+    const cid="hc"+__hclip+"_"+ti;
+    defs+="<clipPath id=\""+cid+"\"><rect x=\""+x.toFixed(2)+"\" y=\""+y.toFixed(2)+"\" width=\""+w2.toFixed(2)+"\" height=\""+h2.toFixed(2)+"\"/></clipPath>";
+    g+="<rect x=\""+x.toFixed(2)+"\" y=\""+y.toFixed(2)+"\" width=\""+w2.toFixed(2)+"\" height=\""+h2.toFixed(2)+"\" fill=\""+hmColor(v,dom)+"\"/>";
+    /* 数値は小数第1位（第2位を四捨五入） */
+    const vTxt=(v>0?"+":"")+(Math.round(v*10)/10).toFixed(1)+"%";
+    const aw=Math.max(2,w2-3), ah=Math.max(2,h2-2.4);
+    const cx=(x+w2/2), cy=(y+h2/2);
+    let body="";
+    /* 名称は「幅に収まるサイズ」を毎回計算。収まらなければ縮小→省略。空欄の箱を作らない */
+    const nameFs=Math.min(11.5,Math.max(6,Math.min(aw/7.4,ah*0.40)));
+    let nmTxt=d.nm;
+    if(hmEstW(nmTxt,nameFs)>aw){
+      while(nmTxt.length>1 && hmEstW(nmTxt+"…",nameFs)>aw) nmTxt=nmTxt.slice(0,-1);
+      if(nmTxt.length>1) nmTxt=nmTxt+"…";
+    }
+    const nmW=hmEstW(nmTxt,nameFs);
+    const valFs=Math.min(13.5,Math.max(5.2,Math.min(aw/ Math.max(3.2,(vTxt.length*0.58)), ah*0.52)));
+    const valW=hmEstW(vTxt,valFs);
+    /* 2行（名称＋数値）が入るか、1行（数値のみ）か、それでも無理なら最小サイズで数値だけ */
+    const twoLine=(h2>=19 && aw>=16 && nmW<=aw*1.02 && valW<=aw*1.02 && (nameFs+valFs*1.12)<=ah);
+    if(twoLine){
+      body+="<text x=\""+cx.toFixed(1)+"\" y=\""+(cy-nameFs*0.12).toFixed(1)+"\" text-anchor=\"middle\" font-size=\""+nameFs.toFixed(1)+"\" fill=\"#fff\" font-weight=\"600\""
+        +(nmW>aw? " textLength=\""+aw.toFixed(1)+"\" lengthAdjust=\"spacingAndGlyphs\"":"")+">"+esc(nmTxt)+"</text>";
+      body+="<text x=\""+cx.toFixed(1)+"\" y=\""+(cy+valFs*0.92).toFixed(1)+"\" text-anchor=\"middle\" font-size=\""+valFs.toFixed(1)+"\" fill=\"#fff\" font-weight=\"800\""
+        +(valW>aw? " textLength=\""+aw.toFixed(1)+"\" lengthAdjust=\"spacingAndGlyphs\"":"")+">"+esc(vTxt)+"</text>";
+    }else{
+      const f2=Math.max(5,Math.min(valFs,Math.min(aw/Math.max(3.2,(vTxt.length*0.58)), ah*0.72)));
+      body+="<text x=\""+cx.toFixed(1)+")\"".replace(")\"","\"")+" y=\""+(cy+f2*0.36).toFixed(1)+"\" text-anchor=\"middle\" font-size=\""+f2.toFixed(1)+"\" fill=\"#fff\" font-weight=\"700\""
+        +(valW>aw*1.02? " textLength=\""+Math.max(2,aw).toFixed(1)+"\" lengthAdjust=\"spacingAndGlyphs\"":"")+">"+esc(vTxt)+"</text>";
+    }
+    if(body) g+="<g clip-path=\"url(#"+cid+")\">"+body+"</g>";
+  });
+  /* 凡例：タイル領域(0〜HT)の外、HT+6 の帯に描く */
+  const LX=56, LW=W-112, LY=HT+6;
+  let lg="";
+  for(let k=0;k<LW;k+=2){
+    const t2=k/(LW-1), vv=(t2*2-1)*dom;
+    lg+="<rect x=\""+(LX+k)+"\" y=\""+LY+"\" width=\"2.2\" height=\"5\" fill=\""+hmColor(vv,dom)+"\"/>";
+  }
+  lg+="<text x=\""+(LX-4)+"\" y=\""+(LY+5)+"\" text-anchor=\"end\" font-size=\"6.4\" fill=\"#9aa4b2\">−"+dom+"%</text>";
+  lg+="<text x=\""+(LX+LW/2)+"\" y=\""+(LY+5)+"\" text-anchor=\"middle\" font-size=\"6.4\" fill=\"#9aa4b2\">0</text>";
+  lg+="<text x=\""+(LX+LW+4)+"\" y=\""+(LY+5)+"\" font-size=\"6.4\" fill=\"#9aa4b2\">+"+dom+"%</text>";
+  box.innerHTML="<svg viewBox=\"0 0 "+W+" "+H+"\" style=\"background:#000;border-radius:6px;display:block\" role=\"img\" aria-label=\"ヒートマップ\">"
+    +"<defs>"+defs+"</defs><rect x=\"0\" y=\"0\" width=\""+W+"\" height=\""+H+"\" fill=\"#000\"/><g>"+g+lg+"</g></svg>";
+  const sorted=rows.slice().sort(function(a,b){ return Math.abs(b.v)-Math.abs(a.v); });
+  const mx=sorted[0];
+  ft.innerHTML="<b style=\"color:#2bd67b\">上昇 "+rows.filter(function(r){return r.v>0;}).length+"</b> ／ <b style=\"color:#ee3a3a\">下落 "+rows.filter(function(r){return r.v<0;}).length
+    +"</b>　｜　最大 <b>"+esc(mx.nm)+" "+(mx.v>0?"+":"")+(Math.round(mx.v*10)/10).toFixed(1)+"%</b>"
+    +"<br>面積＝騰落率の絶対値（最小3%）。行をタップ→月次グラフ／見出しをタップ→ヒートマップ。";
+}
+
+function openHeat(i){
+  CHART_TK="__HM"+i;
+  document.getElementById("chov").hidden=false;
+  document.body.style.overflow="hidden";
+  document.querySelector(".chsheet").classList.add("hmmode");
+  drawHeat(i);
+}
+function bindHeat(){
+  const nodes=[].slice.call(document.querySelectorAll("h2,h3,.sechd,.shd,.sh"));
+  SECTIONS.forEach(function(s,i){
+    for(let k=0;k<nodes.length;k++){
+      const n=nodes[k];
+      if(n.__hm!==undefined) continue;
+      if((n.textContent||"").trim().indexOf(s.t)===0){
+        n.__hm=i; n.classList.add("hmhit");
+        n.addEventListener("click",function(e){ e.stopPropagation(); openHeat(i); });
+        break;
+      }
+    }
+  });
+}
+try{
+  new MutationObserver(function(){ bindHeat(); }).observe(document.body,{childList:true,subtree:true});
+}catch(e){}
+setTimeout(bindHeat,400);
+
+/* ===== 最新1日タブ：前日終値 → 最新値（1営業日） =====
+   月次mapとは別に d1（%）を持つ。金利は日次値の直近2点から算出済み。
+   それ以外はYahooのメタ情報（regularMarketPrice / previousClose）で補う。 */
+/* ===== 最新1日タブ =====
+   タブ名は「全データ源で共通する最新の日付」から決める。
+   実測（2026-11-10）：Yahooの日足は11/09まで、米財務省CSVとECBは11/06まで、
+   財務省は11/06まで。→ 共通の最新日は 11/06。価格も11/06時点の2営業日で揃える。
+   （YahooのregularMarketPrice/previousCloseはpreviousCloseが空のことがあり当てにならないため、
+     日足バーを直接読んで前日終値→当日終値を計算する） */
+/* ===== 最新1日タブ =====
+   タブ名＝全データ源で共通する最新日（金利CSVの最新日）。実測では価格系の方が新しいため、
+   共通日までに揃える。日次騰落率は「Yahooの日足を前日終値→当日終値で計算」する。
+   ・spark一括API（20銘柄/1リクエスト）を主経路にし、失敗分だけ個別chart APIへ落とす
+   ・CDATA[tk].last / .map は絶対に書き換えない（月次表示を壊さない）
+   ・未完了の間は「取得できません」ではなく「取得中」を出す */
+let D1_RUNNING=false, D1_DONE=false, D1_LASTTRY=0;
+/* 日次騰落率を持てない項目（PCCはYahooに日足系列が無い）。完了判定から除外し「—」表示にする */
+const D1SKIP={PCC:1};
+let D1_FIN=false, D1_DL=Date.now()+25000;
+/* 最新1日は月次(1.6秒)とは別枠の期限を持つ。期限内は「取得中」、超過後は「取得できません」 */
+function d1Left(){ return D1_FIN? 0 : Math.max(0,Math.ceil((D1_DL-Date.now())/1000)); }
+/* 取得済みの日次騰落率をlocalStorageへ保存（次回起動時に通信ゼロで復元） */
+const D1_KEY="ytd_d1_v2";
+function d1Save(){
+  const o={cut:d1Cut(),d:{}};
+  ALL.forEach(function(tk){ const m=CDATA[tk]; if(m&&typeof m.d1==="number") o.d[tk]=[m.d1,m.d1d||null]; });
+  try{ localStorage.setItem(D1_KEY,JSON.stringify(o)); }catch(e){}
+}
+function d1Load(){
+  try{
+    const j=JSON.parse(localStorage.getItem(D1_KEY)||"null"); if(!j||!j.d) return 0;
+    let n=0;
+    Object.keys(j.d).forEach(function(tk){
+      const m=CDATA[tk]; if(!m||typeof m.d1==="number") return;
+      const a=j.d[tk]||[]; if(typeof a[0]!=="number") return;
+      m.d1=a[0]; if(a[1]) m.d1d=a[1]; n++;
+    });
+    return n;
+  }catch(e){ return 0; }
+}
+
+function d1Cut(){
+  const c={};
+  RATEKEYS.forEach(function(tk){ const m=CDATA[tk]; const a=m&&m.asof;
+    if(a&&/^\d{4}-\d{2}-\d{2}$/.test(a)) c[a]=(c[a]||0)+1; });
+  let best=null,bn=0;
+  Object.keys(c).forEach(function(k){ if(c[k]>bn||(c[k]===bn&&(!best||k>best))){ best=k; bn=c[k]; } });
+  return best||null;
+}
+function d1Label(cut){
+  if(!cut) return "最新1日";
+  const p=String(cut).split("-");
+  return parseInt(p[1],10)+"月"+parseInt(p[2],10)+"日";
+}
+/* 実際に騰落率の計算に使った日付＝各項目の d1d の最頻値。これをタブ名にする。
+   （取得元ごとに最新日が違うため、固定日ではなく“使った日”を表示する） */
+function d1ActualDate(){
+  const c={};
+  ALL.forEach(function(tk){
+    const m=CDATA[tk];
+    if(!m||typeof m.d1!=="number"||!m.d1d) return;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(m.d1d)) return;
+    c[m.d1d]=(c[m.d1d]||0)+1;
+  });
+  let best=null,bn=0;
+  Object.keys(c).forEach(function(k){
+    if(c[k]>bn||(c[k]===bn&&(!best||k>best))){ best=k; bn=c[k]; }
+  });
+  return best;
+}
+function d1Ymd(v){ return (v&&/^\d{4}-\d{2}-\d{2}$/.test(v))? v : null; }
+function d1Name(){
+  try{ const a=d1Ymd(d1ActualDate()); if(a) return d1Label(a); }catch(e){}
+  try{
+    const c={};
+    ALL.forEach(function(tk){ const m=CDATA[tk]; const a=d1Ymd(m&&m.d1d)||d1Ymd(m&&m.asof);
+      if(a) c[a]=(c[a]||0)+1; });
+    let best=null,bn=0;
+    Object.keys(c).forEach(function(k){ if(c[k]>bn||(c[k]===bn&&(!best||k>best))){ best=k; bn=c[k]; } });
+    if(best) return d1Label(best);
+  }catch(e){}
+  try{ const c=d1Ymd(d1Cut()); if(c) return d1Label(c); }catch(e){}
+  try{ const v=d1Ymd(localStorage.getItem("ytd_d1last")); if(v) return d1Label(v); }catch(e){}
+  try{ const a=d1Ymd(typeof ASOF!=="undefined"?ASOF:null); if(a) return d1Label(a); }catch(e){}
+  return "最新1日";
+}
+let D1_NAME_SHOWN="";
+function d1Sync(){
+  const nm=d1Name();
+  if(nm===D1_NAME_SHOWN) return nm;
+  D1_NAME_SHOWN=nm;
+  try{ const lastP=PERIODS[PERIODS.length-1]; if(lastP&&lastP.d1) lastP.label=nm; }catch(e){}
+  try{ const a=document.querySelector('#pnav a[data-d1]'); if(a&&a.textContent!==nm) a.textContent=nm; }catch(e){}
+  try{ const b=document.querySelector('#tabs button[data-d1]'); if(b&&b.textContent!==nm) b.textContent=nm; }catch(e){}
+  return nm;
+}
+function d1SetLabel(cut){
+  const lastP=PERIODS[PERIODS.length-1];
+  if(!lastP||!lastP.d1||!cut||lastP.date===cut) return false;
+  lastP.label=d1Label(cut); lastP.date=cut;
+  try{ renderNav(); }catch(e){}
+  try{ if(typeof wTabs==="function") wTabs(); }catch(e){}
+  return true;
+}
+function d1Put(tk,d1,d1d){
+  if(typeof d1!=="number"||!isFinite(d1)) return false;
+  const cd=CDATA[tk]; if(!cd) return false;
+  cd.d1=d1; cd.d1d=d1d; try{ if(d1d) localStorage.setItem("ytd_d1last",d1d); }catch(e){}
+  return true;
+}
+function d1FromRows(rows,cut){
+  let use=rows;
+  if(cut){ const f=rows.filter(function(x){ return x.d<=cut; }); if(f.length>=2) use=f; }
+  if(use.length<2) return null;
+  const b=use[use.length-2], c2=use[use.length-1];
+  if(!(b.v>0)) return null;
+  return {d1:+(((c2.v/b.v)-1)*100).toFixed(2), d:c2.d};
+}
+async function d1PassSpark(cut){
+  /* 12銘柄ずつ（20だとYahoo側が一部を落とすことがある）。失敗時は別ホスト→プロキシへ。
+     パースできた銘柄が1件でもあればその塊は成功とみなし、残りはchart側で拾う */
+  const targets=ALL.filter(function(tk){ return !D1SKIP[tk] && RATEKEYS.indexOf(tk)<0 && (!CDATA[tk] || typeof CDATA[tk].d1!=="number" || (cut&&CDATA[tk].d1d!==cut)); });
+  if(!targets.length) return 0;
+  let n=0;
+  for(let i=0;i<targets.length;i+=12){
+    const chunk=targets.slice(i,i+12);
+    const q="https://query{0}.finance.yahoo.com/v8/finance/spark?symbols="
+      +chunk.map(function(s){ return encodeURIComponent(s); }).join(",")
+      +"&range=1mo&interval=1d&indicators=close";
+    for(let k=0;k<3;k++){
+      let r=null;
+      try{
+        if(k===0) r=await fetchDirect(q.replace("{0}","1"),7000);
+        else if(k===1) r=await fetchDirect(q.replace("{0}","2"),7000);
+        else r=await fetchRaw("https://r.jina.ai/"+q.replace("{0}","1"),9000);
+      }catch(e){ r=null; }
+      if(!r||!r.body) continue;
+      let got=0;
+      try{
+        const j=jsonOf(r.body); if(!j) continue;
+        chunk.forEach(function(tk){
+          const e=j[tk]; if(!e||!e.timestamp||!e.timestamp.length) return;
+          const rows=[];
+          for(let z=0;z<e.timestamp.length;z++){
+            const v=(e.close||[])[z];
+            if(typeof v!=="number"||!isFinite(v)) continue;
+            rows.push({d:new Date(e.timestamp[z]*1000).toISOString().slice(0,10), v:v});
+          }
+          const o=d1FromRows(rows,cut);
+          if(o&&d1Put(tk,o.d1,o.d)){ n++; got++; }
+        });
+      }catch(e){}
+      if(got){ break; }
+    }
+    try{ render(false); }catch(e){}
+  }
+  return n;
+}
+async function d1PassChart(cut,list){
+  let n=0;
+  for(let i=0;i<list.length;i+=16){
+    await Promise.all(list.slice(i,i+16).map(async function(tk){
+      const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)+"?range=1mo&interval=1d";
+      let r=null; try{ r=await fetchDirect(u,4000); }catch(e){}
+      if(!r||!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+u,5000); }catch(e){} }
+      if(!r||!r.body) return;
+      try{
+        const j=jsonOf(r.body), res=j&&j.chart&&j.chart.result&&j.chart.result[0];
+        if(!res||!res.timestamp) return;
+        const tz=(res.meta&&res.meta.exchangeTimezoneName)||"UTC";
+        const px=res.indicators.quote[0].close, rows=[];
+        for(let z=0;z<res.timestamp.length;z++){
+          const v=px[z]; if(typeof v!=="number"||!isFinite(v)) continue;
+          let d;
+          try{
+            const pr=new Intl.DateTimeFormat("en-CA",{timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"})
+              .formatToParts(new Date(res.timestamp[z]*1000)).reduce(function(a,x){ a[x.type]=x.value; return a; },{});
+            d=pr.year+"-"+pr.month+"-"+pr.day;
+          }catch(e){ d=new Date(res.timestamp[z]*1000).toISOString().slice(0,10); }
+          rows.push({d:d,v:v});
+        }
+        const o=d1FromRows(rows,cut);
+        if(o&&d1Put(tk,o.d1,o.d)) n++;
+      }catch(e){}
+    }));
+    try{ render(); }catch(e){}
+  }
+  return n;
+}
+async function fillD1(force){
+  if(D1_RUNNING) return;
+  if(!force && D1_DONE && Date.now()-D1_LASTTRY<60e3) return;
+  D1_RUNNING=true; D1_LASTTRY=Date.now();
+  if(D1_FIN||D1_DL<Date.now()) D1_DL=Date.now()+25000;
+  try{ d1Load(); }catch(e){}
+  try{
+    const cut=d1Cut();
+    d1SetLabel(d1ActualDate()||cut);
+    /* 金利は日次2点から算出済み。無い分だけ再計算を試みる */
+    RATEKEYS.forEach(function(tk){
+      const m=CDATA[tk]; if(!m) return;
+      if(typeof m.d1==="number"){ if(m.asof) m.d1d=m.asof; }
+    });
+    await d1PassSpark(cut);
+    let rest=ALL.filter(function(tk){ return !D1SKIP[tk] && RATEKEYS.indexOf(tk)<0 && (!CDATA[tk] || typeof CDATA[tk].d1!=="number" || (cut&&CDATA[tk].d1d!==cut)); });
+    if(rest.length) await d1PassChart(cut,rest);
+    rest=ALL.filter(function(tk){ return !D1SKIP[tk] && RATEKEYS.indexOf(tk)<0 && (typeof CDATA[tk].d1!=="number" || (cut&&CDATA[tk].d1d!==cut)); });
+    /* 例外扱いの項目は最初から対象外。残りが無ければ「取得完了」として確定させる
+       （ここを緩めると未取得が永久に「取得中」のままになり、数値が出ない） */
+    D1_DONE=(rest.length===0);
+    const act=d1ActualDate();
+    if(act) d1SetLabel(act);
+  }catch(e){ D1_DONE=false; }
+  D1_FIN=true;                       /* ここから先は未取得を「取得できません」で確定 */
+  D1_RUNNING=false;
+  try{ d1Save(); }catch(e){}
+  try{ render(); }catch(e){}
+}
+
+
 document.getElementById("openall").addEventListener("click",function(){
   const ds=document.querySelectorAll(".defsec"), anyClosed=[].some.call(ds,function(d){ return !d.open; });
   [].forEach.call(ds,function(d){ d.open=anyClosed; });
@@ -2154,8 +2680,9 @@ const WNAMES=["名目市場金利","実質金利","債券","為替","米国主�
 /* セクションごとのバー満杯値（0を中央に左右対称）。実質金利のみ pt なので別スケール */
 const WSCALE_YTD=[100,10,100,100,100,100,100,100,100];  /* 年初来：−100〜+100% / 実質−10〜+10pt */
 const WSCALE_M  =[20,3,20,20,20,20,20,20,20];            /* 各月：−20〜+20% / 実質−3〜+3pt */
+const WSCALE_D  =[3,0.3,3,3,3,3,3,3,3];                  /* 最新1日：−3〜+3% / 実質−0.3〜+0.3pt */
 const WSCALE=WSCALE_YTD;   /* 後方互換（描画時は wScale() を使う） */
-function wScale(){ return CUR===0 ? WSCALE_YTD : WSCALE_M; }
+function wScale(){ const p=PERIODS[CUR]; if(p&&p.d1) return WSCALE_D; return CUR===0 ? WSCALE_YTD : WSCALE_M; }
 const WUNIT =["%","pt","%","%","%","%","%","%","%","%"];
 const WMAX=[];
 
@@ -2179,7 +2706,8 @@ function wRender(){
       +'<span class="tm">'+esc(title)+'</span>'
       +'<span class="sc" title="'+(i===1
           ? (CUR===0?'前年12月との差（ポイント）。バーは−10〜+10ptで満杯':'前月との差（ポイント）。バーは−3〜+3ptで満杯')
-          : (CUR===0?'前年12月比の変化率。バーは−100〜+100%で満杯':'前月比の変化率。バーは−20〜+20%で満杯'))+'">バー範囲 ±'+(SC[i]||100)+(WUNIT[i]||"%")+'</span></div>'
+          : ((PERIODS[CUR]&&PERIODS[CUR].d1)?'前日比の変化率。バーは−3〜+3%で満杯'
+             :(CUR===0?'前年12月比の変化率。バーは−100〜+100%で満杯':'前月比の変化率。バーは−20〜+20%で満杯')))+'">バー範囲 ±'+(SC[i]||100)+(WUNIT[i]||"%")+'</span></div>'
       +'<div class="wax"><span class="ax"><b>−'+(SC[i]||100)+(WUNIT[i]||"%")+'</b><b>0</b><b>+'+(SC[i]||100)+(WUNIT[i]||"%")+'</b></span></div>';
     /* 固定スケール：セクションをまたいで長さを比較できる。
        年初来＝−100〜+100%（実質−10〜+10pt）、各月＝−20〜+20%（実質−3〜+3pt）。 */
@@ -2244,18 +2772,74 @@ function wDefs(){
   document.getElementById('fst').textContent='項目の定義（全'+SECTIONS.reduce(function(a,s){return a+s.items.length;},0)+'要素）';
   window.scrollTo(0,0);
 }
+/* ===== タブ帯の横スライド（指でもマウスでもドラッグで送れる） =====
+   ・タブ部分を押したまま左右に動かすとスクロール（6px超でドラッグと判定）
+   ・ドラッグ後のclickは握りつぶす（誤ってタブが切り替わらない）
+   ・縦ホイールでも横送り（shift+ホイールも可）
+   ・touch-action:pan-y で「縦スクロールはブラウザ／横だけJS」に切り分ける */
+function hDrag(el){
+  if(!el||el.__hd) return; el.__hd=1;
+  let down=false,sx=0,sl=0,moved=false,pid=null;
+  el.addEventListener("pointerdown",function(e){
+    if(typeof e.button==="number"&&e.button!==0) return;
+    down=true; moved=false; sx=e.clientX; sl=el.scrollLeft; pid=e.pointerId;
+    el.classList.add("grab");
+  },{passive:true});
+  el.addEventListener("pointermove",function(e){
+    if(!down) return;
+    const dx=e.clientX-sx;
+    if(!moved&&Math.abs(dx)>6){
+      moved=true; el.classList.add("dragging");
+      try{ if(pid!=null&&el.setPointerCapture) el.setPointerCapture(pid); }catch(_){}
+    }
+    if(moved){
+      el.scrollLeft=sl-dx;
+      if(e.cancelable) e.preventDefault();
+    }
+  },{passive:false});
+  const end=function(){
+    if(!down) return;
+    down=false; el.classList.remove("grab","dragging");
+    try{ if(pid!=null&&el.releasePointerCapture) el.releasePointerCapture(pid); }catch(_){}
+    pid=null;
+  };
+  el.addEventListener("pointerup",end,{passive:true});
+  el.addEventListener("pointercancel",end,{passive:true});
+  el.addEventListener("pointerleave",function(){ if(down&&!moved) end(); },{passive:true});
+  el.addEventListener("click",function(e){
+    if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; }
+  },true);
+  el.addEventListener("wheel",function(e){
+    if(Math.abs(e.deltaY)<=Math.abs(e.deltaX)) return;
+    if(el.scrollWidth<=el.clientWidth+2) return;
+    const before=el.scrollLeft;
+    el.scrollLeft+=e.deltaY;
+    if(el.scrollLeft!==before) e.preventDefault();
+  },{passive:false});
+  /* 端まで来たらわかるように、スクロール可否をクラスで持たせる */
+  const mark=function(){
+    const sc=el.scrollWidth>el.clientWidth+2;
+    el.classList.toggle("hscroll",sc);
+    el.classList.toggle("atstart",el.scrollLeft<=1);
+    el.classList.toggle("atend",el.scrollLeft>=el.scrollWidth-el.clientWidth-1);
+  };
+  el.addEventListener("scroll",mark,{passive:true});
+  setTimeout(mark,0); setTimeout(mark,400); setTimeout(mark,1200);
+}
+
 function wTabs(){
   /* 今月より先（off）のタブは生成しない。当年の実績がある月だけを並べる */
   document.getElementById('tabs').innerHTML=PERIODS.map(function(p,i){
     if(p.off) return '';
-    const lbl=esc(p.label)+(p.ly? '<sup>'+String(p.ym).slice(2)+'</sup>':'')+(p.partial? '<sup>月中</sup>':'');
-    return '<button data-i="'+i+'"'+((!WDEFS&&i===CUR)?' class="on"':'')+'>'+lbl+'</button>';
+    const lbl=esc(p.d1? d1Name() : p.label)+(p.ly? '<sup>'+String(p.ym).slice(2)+'</sup>':'')+(p.partial? '<sup>月中</sup>':'');
+    return '<button data-i="'+i+'"'+(p.d1?' data-d1="1"':'')+((!WDEFS&&i===CUR)?' class="on"':'')+'>'+lbl+'</button>';
   }).join('')
   +'<button data-i="-1" class="defsbtn'+(WDEFS?' on':'')+'">定義</button>';
   /* 固定タブの実高を測り、body余白と見出しのsticky位置に反映 */
   const _tb=document.getElementById('tabs');
   if(_tb) document.documentElement.style.setProperty('--tabh', _tb.offsetHeight+'px');
 }
+try{ hDrag(document.getElementById("tabs")); }catch(e){}
 document.getElementById('tabs').addEventListener('click',function(e){
   const b=e.target.closest('button'); if(!b) return;
   const idx=+b.dataset.i;
@@ -2279,7 +2863,7 @@ render = function(){ wRender(); };
 
 try{
   /* 初期表示は必ず当月のタブ（PERIODS[0]=年初来、PERIODS[m]=m月） */
-  CUR = PERIODS.length-1;   /* 当月＝末尾タブ */
+  CUR = defTab();   /* 当月（最新1日タブは通常表示しない） */
   if(sessionStorage.getItem('wid_defs')==='1') WDEFS=true;
 }catch(e){}
 wTabs(); if(WDEFS) wDefs(); else wRender();
