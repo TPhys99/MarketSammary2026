@@ -246,7 +246,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0434</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0436</span>
 </footer>
 
 <script>
@@ -701,6 +701,50 @@ function d1diag(tk){
   return o;
 }
 try{ window.d1diag=d1diag; }catch(e){}
+/* ===== 画面上で日付の内訳を確認する（コンソール不要） =====
+   index.html?diag=1 で開くと、全銘柄の日付の内訳を上部に表示する。
+   各行をタップ（クリック）するとその行だけ詳しく出る。 */
+const DIAG_ON=(function(){ try{ return /(\?|&)diag=1/.test(location.search); }catch(e){ return false; } })();
+let DIAG_BOX=null;
+function diagText(){
+  const lines=[];
+  lines.push("build "+ (document.getElementById("build")? document.getElementById("build").textContent : ""));
+  lines.push("now(UTC) "+new Date().toISOString());
+  lines.push("tab "+((PERIODS[CUR]&&PERIODS[CUR].label)||"")+"  d1Date="+(d1Date()||"-"));
+  lines.push("tk\td1d\tasof\tbarD1\texp\tshown\tlive\ttz");
+  ALL.forEach(function(tk){
+    const m=CDATA[tk]||{};
+    lines.push([tk, m.d1d||"-", m.asof||"-", (D1STORE[tk]&&D1STORE[tk][1])||"-",
+      d1Expect(tk)||"-", d1RowDate(tk)||"-", d1IsLive(tk)?"LIVE":"", tzOf(tk)].join("\t"));
+  });
+  return lines.join("\n");
+}
+function diagRender(){
+  if(!DIAG_ON) return;
+  try{
+    if(!DIAG_BOX){
+      DIAG_BOX=document.createElement("div");
+      DIAG_BOX.style.cssText="position:fixed;left:0;right:0;top:0;max-height:52vh;overflow:auto;z-index:99999;"
+        +"background:#0b1220;color:#cfe3ff;border-bottom:2px solid #4a90d9;font:10px/1.45 ui-monospace,Menlo,Consolas,monospace;"
+        +"padding:6px 8px;white-space:pre;";
+      const bar=document.createElement("div");
+      bar.style.cssText="display:flex;gap:8px;align-items:center;margin-bottom:4px;font-size:11px;";
+      const b1=document.createElement("button"); b1.textContent="全コピー";
+      b1.style.cssText="padding:3px 10px;border-radius:5px;border:1px solid #4a90d9;background:#13233d;color:#cfe3ff;font-size:11px;";
+      b1.onclick=function(){ try{ navigator.clipboard.writeText(diagText()); b1.textContent="コピーしました"; setTimeout(function(){ b1.textContent="全コピー"; },1500); }catch(e){ alert(diagText()); } };
+      const b2=document.createElement("button"); b2.textContent="閉じる";
+      b2.style.cssText=b1.style.cssText;
+      b2.onclick=function(){ DIAG_BOX.style.display="none"; };
+      const t=document.createElement("span"); t.id="diagttl"; t.textContent="日付の内訳";
+      bar.appendChild(b1); bar.appendChild(b2); bar.appendChild(t);
+      const pre=document.createElement("pre"); pre.id="diagpre"; pre.style.cssText="margin:0;white-space:pre;";
+      DIAG_BOX.appendChild(bar); DIAG_BOX.appendChild(pre);
+      document.body.appendChild(DIAG_BOX);
+    }
+    const pre=document.getElementById("diagpre");
+    if(pre) pre.textContent=diagText();
+  }catch(e){}
+}
 function fixDay(d,tk){
   if(!d) return null;
   let t=new Date(d+"T00:00:00Z");
@@ -863,6 +907,7 @@ setInterval(function(){
   let anyUndef=false;
   for(let i=0;i<ALL.length;i++){ if(!CDATA[ALL[i]] && (!pastDL()||PENDING[ALL[i]])){ anyUndef=true; break; } }
   try{ d1Sync(); }catch(e){}
+  try{ diagRender(); }catch(e){}
   if(anyUndef){ FINAL_TICK=false; try{ render(false); }catch(e){} }
   else if(!FINAL_TICK){ FINAL_TICK=true; try{ render(false); }catch(e){} }
 },1000);
@@ -1012,7 +1057,10 @@ function liveFix(m,res){
   m.map[k]=p; m.last=p;
   /* 値（regularMarketPrice）を採用したら、その値の日付も同じ時刻から決める。
      日付だけ最終バーのまま残ると「11/10の値なのに11/9の日付」になる。 */
-  if(t){ const a=emYmd(t,tz); if(a){ m.asof=a; m.d1d=a; } }
+  /* ここは市場のタイムスタンプ。現地00:00のバーを渡されることがあるため、
+     「8時未満は前営業日」という東財クォート用の補正(emYmd)を使ってはいけない
+     （東京・ムンバイで必ず1日前にずれる）。純粋なTZ変換の tsYmd を使う。 */
+  if(t){ const a=tsYmd(t,tz); if(a){ m.asof=a; m.d1d=a; } }
   /* 場中(REGULAR)なら未確定。バッジに「11/10場中」と出すための印 */
   if(meta.marketState) m.mstate=meta.marketState;
   return m;
