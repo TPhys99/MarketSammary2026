@@ -221,6 +221,10 @@ body{
 .chft b{color:var(--tx);font-weight:700}
 
 .d1dt{display:inline-block;margin-left:3px;font-size:8.5px;font-weight:700;font-style:normal;color:var(--tx2);border-radius:3px;padding:0 3px;line-height:1.35;vertical-align:middle;background:rgba(128,128,128,.16)}
+.subh{display:flex;align-items:center;gap:6px;margin:7px 0 2px;padding:2px 2px 0}
+.subh span{font-size:10px;font-weight:800;letter-spacing:.03em;color:var(--tx2);
+  border-left:2px solid var(--accent,var(--tx));padding-left:6px;line-height:1.4}
+.subh:first-child{margin-top:2px}
 </style>
 </head>
 <body>
@@ -257,15 +261,14 @@ const SECTIONS=[
 {t:"債券ETF",col:0,items:[["短期債","SHY",null,"dv"],["中期債","IEF",null,"dv"],["20年超債券","TLT",null,"dv"],["債券合計","AGG",null,"dv"],["債券全般","BND",null,"dv"],["TIPS","TIP",null,"dv"],["ハイイールド債","HYG",null,"dv"]]},
  {t:"為替",col:0,items:[["ドル指数","DX-Y.NYB","hl"],["ドル/円","JPY=X","hl"],["ユーロ/ドル","EURUSD=X"],["ドル/ルピー","USDINR=X"],["ルピー/円","INRJPY=X"]]},
  {t:"米国主要株価指数",col:1,items:[["S&P500指数","^GSPC","hl"],["S&P中型株400指数","^SP400","hl"],["S&P小型株600指数","^SP600","hl"],["ダウ平均指数","^DJI","hl"],["ナスダック100指数","^NDX","hl"],["ラッセル1000指数","^RUI","hl"],["ラッセル2000指数","^RUT","hl"],["ラッセル3000指数","^RUA","hl"],["S&P500グロースETF","IVW","hl"],["S&P中型400グロースETF","IJK","hl"],["S&P小型600グロースETF","IJT","hl"],["S&P500バリューETF","IVE","hl"],["S&P中型400バリューETF","IJJ","hl"],["S&P小型600バリューETF","IJS","hl"],["ダウ平均配当株ETF","DVY","hl","dv"],["S&P500均等ウェイトETF","RSP","hl"]]},
- {t:"S&P500セクターETF",col:1,items:[["一般消費財","XLY","hl"],["生活必需品","XLP","hl"],["エネルギー","XLE","hl"],["金融","XLF","hl"],["ヘルスケア","XLV","hl"],["工業","XLI","hl"],["素材","XLB","hl"],["テクノロジー","XLK","hl"],["通信サービス","XLC","hl"],["公益","XLU","hl"],["不動産","XLRE","hl"]]},
+{t:"S&P500セクター（19分類）",col:1,items:[["電子テクノロジー","AAPL"],["テクノロジーサービス","MSFT"],["ヘルスケアテクノロジー","LLY"],["小売業","AMZN"],["金融","BRK-B"],["生産財製造","CAT"],["エネルギー鉱物","XOM"],["公益事業","NEE"],["交通","UNP"],["耐久消費財","TSLA"],["非耐久消費財","KO"],["消費者サービス","MCD"],["ヘルスケアサービス","UNH"],["プロセス産業","LIN"],["商業サービス","ACN"],["通信","NFLX"],["流通サービス","GWW"],["産業サービス","BKR"],["非エネルギー鉱物","FCX"]]},
  {t:"主要国株式指数",col:2,items:[['米国',"^GSPC","S&P500","hl"],['日本',"^N225","日経平均","hl"],["インド","^BSESN","SENSEX"],["中国","000001.SS","上海総合"],["香港","^HSI","ハンセン"],["ドイツ","^GDAXI","DAX"],["英国","^FTSE","FTSE100"],["フランス","^FCHI","CAC40"],["イタリア","FTSEMIB.MI","FTSE MIB"],["スペイン","^IBEX","IBEX35"],["カナダ","^GSPTSE","TSX"],["豪州","^AXJO","ASX200"],["ブラジル","^BVSP","ボベスパ"],["メキシコ","^MXX","IPC"],["南アフリカ","EZA","南アフリカETF"],["中東","EIS","中東ETF"],["新興国","EEM","新興国ETF"]]},
- {t:"その他ETF、指数など",col:2,items:[["半導体株","SMH"],["VIX","^VIX"],["PCC","PCC"],
+ {t:"その他ETF",col:2,items:[["半導体株","SMH"],["VIX","^VIX"],["PCC","PCC"],
   ["新興国株(IEMG)","IEMG"],["米国除く全世界株(VXUS)","VXUS"],
   ["農産物(DBA)","DBA"],["ベースメタル(DBB)","DBB"],["貴金属(DBP)","DBP"],["コモディティ全般(DBC)","DBC"],["エネルギー(DBE)","DBE"],
   ["アルファベット(GOOG)","GOOG"],["アップル(AAPL)","AAPL"],["メタ(META)","META"],["アマゾン(AMZN)","AMZN"],
-  ["マイクロソフト(MSFT)","MSFT"],["テスラ(TSLA)","TSLA"],["エヌビディア(NVDA)","NVDA"],["TSMC(TSM)","TSM"],
-  ["マスターカード(MA)","MA"],["SKハイニックス(SKHY)","SKHY"],["インテル(INTC)","INTC"],["AMD(AMD)","AMD"],
-  ["アーム(ARM)","ARM"],["クアルコム(QCOM)","QCOM"],["イーライリリー(LLY)","LLY"],["パランティア(PLTR)","PLTR"]]},
+  ["マイクロソフト(MSFT)","MSFT"],["テスラ(TSLA)","TSLA"],["エヌビディア(NVDA)","NVDA"],["TSMC(TSM)","TSM"],["マイクロン(MU)","MU"],["SKハイニックス(SKHY)","SKHY"],["インテル(INTC)","INTC"],["AMD(AMD)","AMD"],
+  ["アーム(ARM)","ARM"],["クアルコム(QCOM)","QCOM"],["ビザ(V)","V"],["マスターカード(MA)","MA"],["イーライリリー(LLY)","LLY"],["パランティア(PLTR)","PLTR"],["電子テクノロジー","__SUB__:電子テクノロジー"],["AAPL","AAPL"],["NVDA","NVDA"],["AVGO","AVGO"],["AMD","AMD"],["MU","MU"],["テクノロジーサービス","__SUB__:テクノロジーサービス"],["MSFT","MSFT"],["GOOGL","GOOGL"],["META","META"],["ORCL","ORCL"],["PLTR","PLTR"],["ヘルスケアテクノロジー","__SUB__:ヘルスケアテクノロジー"],["LLY","LLY"],["JNJ","JNJ"],["ABBV","ABBV"],["MRK","MRK"],["TMO","TMO"],["小売業","__SUB__:小売業"],["AMZN","AMZN"],["WMT","WMT"],["COST","COST"],["HD","HD"],["TJX","TJX"],["金融","__SUB__:金融"],["BRK-B","BRK-B"],["JPM","JPM"],["V","V"],["MA","MA"],["BAC","BAC"],["生産財製造","__SUB__:生産財製造"],["CAT","CAT"],["GE","GE"],["HON","HON"],["ETN","ETN"],["PH","PH"],["エネルギー鉱物","__SUB__:エネルギー鉱物"],["XOM","XOM"],["CVX","CVX"],["COP","COP"],["EOG","EOG"],["SLB","SLB"],["公益事業","__SUB__:公益事業"],["NEE","NEE"],["DUK","DUK"],["SO","SO"],["D","D"],["AEP","AEP"],["交通","__SUB__:交通"],["UNP","UNP"],["UPS","UPS"],["FDX","FDX"],["CSX","CSX"],["DAL","DAL"],["耐久消費財","__SUB__:耐久消費財"],["TSLA","TSLA"],["DHI","DHI"],["LEN","LEN"],["NVR","NVR"],["GRMN","GRMN"],["非耐久消費財","__SUB__:非耐久消費財"],["KO","KO"],["PG","PG"],["PEP","PEP"],["PM","PM"],["MDLZ","MDLZ"],["消費者サービス","__SUB__:消費者サービス"],["MCD","MCD"],["SBUX","SBUX"],["MAR","MAR"],["HLT","HLT"],["YUM","YUM"],["ヘルスケアサービス","__SUB__:ヘルスケアサービス"],["UNH","UNH"],["ELV","ELV"],["CI","CI"],["CVS","CVS"],["HCA","HCA"],["プロセス産業","__SUB__:プロセス産業"],["LIN","LIN"],["SHW","SHW"],["APD","APD"],["ECL","ECL"],["DD","DD"],["商業サービス","__SUB__:商業サービス"],["ACN","ACN"],["PAYX","PAYX"],["CTAS","CTAS"],["RSG","RSG"],["WM","WM"],["通信","__SUB__:通信"],["NFLX","NFLX"],["DIS","DIS"],["CMCSA","CMCSA"],["T","T"],["VZ","VZ"],["流通サービス","__SUB__:流通サービス"],["GWW","GWW"],["FAST","FAST"],["POOL","POOL"],["WSO","WSO"],["LKQ","LKQ"],["産業サービス","__SUB__:産業サービス"],["BKR","BKR"],["HAL","HAL"],["MPC","MPC"],["PSX","PSX"],["OKE","OKE"],["非エネルギー鉱物","__SUB__:非エネルギー鉱物"],["FCX","FCX"],["NEM","NEM"],["NUE","NUE"],["STLD","STLD"],["VMC","VMC"]]},
  {t:"コモディティETF",col:3,items:[["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["プラチナ(PPLT)","PPLT"],["コモディティ全般(DBC)","DBC"],["金属鉱山(XME)","XME"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
   {t:"暗号通貨",col:3,items:[["ビットコイン/ドル","BTC-USD"],["イーサリアム/ドル","ETH-USD"],["リップル/ドル","XRP-USD"],["ライトコイン/ドル","LTC-USD"],["ソラナ/ドル","SOL-USD"],["ドージコイン/ドル","DOGE-USD"],["カルダノ/ドル","ADA-USD"],["チェーンリンク/ドル","LINK-USD"],["BNB/ドル","BNB-USD"],["アバランチ/ドル","AVAX-USD"],["ビットコイン/円","BTC-JPY"],["イーサリアム/円","ETH-JPY"],["リップル/円","XRP-JPY"]]}
 ];
@@ -443,6 +446,93 @@ document.getElementById("lgnote").innerHTML=
    ALL は「取得対象の一覧」なので重複を除く（二重取得・進捗の二重計上を防ぐ）。 */
 /* 追加銘柄（PCCの下に並べたETF・個別株）の定義 */
 Object.assign(DEFS,{
+"AVGO":"Broadcom Inc.。半導体（ネットワーク・カスタムASIC）とインフラソフトを手がける米国企業。",
+"ORCL":"Oracle Corp.。データベースとクラウド基盤（OCI）を提供する米国企業。",
+"GOOGL":"Alphabet Inc. の Class A 普通株。GOOGと同一企業（議決権の有無が違う）。",
+"JNJ":"Johnson & Johnson。医薬品と医療機器を手がける米国のヘルスケア大手。",
+"ABBV":"AbbVie Inc.。免疫・がん領域の医薬品が主力の米国企業。",
+"MRK":"Merck & Co.。がん免疫薬（キイトルーダ）を持つ米国の製薬大手。",
+"TMO":"Thermo Fisher Scientific。研究用機器・試薬を提供する世界最大のライフサイエンス企業。",
+"WMT":"Walmart Inc.。世界最大の小売チェーン（スーパーセンター）。",
+"COST":"Costco Wholesale。会員制倉庫型小売の米国企業。",
+"HD":"The Home Depot。北米最大のホームセンター。",
+"TJX":"TJX Companies。オフプライス（ブランド品割安販売）の小売企業。",
+"BRK-B":"Berkshire Hathaway の Class B 株。バフェット率いる投資持株会社。",
+"JPM":"JPMorgan Chase。米国最大の銀行グループ。",
+"BAC":"Bank of America。米国の大手銀行。",
+"CAT":"Caterpillar Inc.。建設機械・鉱山機械の世界最大手。",
+"GE":"GE Aerospace（旧GE）。航空機エンジンを主力とする米国企業。",
+"HON":"Honeywell International。航空・自動化・素材の複合企業。",
+"ETN":"Eaton Corp.。電力管理・電動化機器のメーカー。",
+"PH":"Parker Hannifin。油空圧・運動制御機器のメーカー。",
+"XOM":"Exxon Mobil。石油メジャー最大手。",
+"CVX":"Chevron Corp.。石油メジャーの米国企業。",
+"COP":"ConocoPhillips。独立系の石油・ガス探掘企業。",
+"EOG":"EOG Resources。シェールオイル・ガスの探掘企業。",
+"SLB":"SLB（旧Schlumberger）。油田サービス世界最大手。",
+"NEE":"NextEra Energy。再生可能エネルギー比率が高い米国の電力会社。",
+"DUK":"Duke Energy。米国南部の電力・ガス会社。",
+"SO":"Southern Company。米国南東部の電力会社。",
+"D":"Dominion Energy。バージニア州中心の電力会社。",
+"AEP":"American Electric Power。米国中西部の送配電会社。",
+"UNP":"Union Pacific。米国最大級の鉄道貨物会社。",
+"UPS":"United Parcel Service。世界最大の宅配・物流企業。",
+"FDX":"FedEx Corp.。航空貨物・宅配の物流企業。",
+"CSX":"CSX Corp.。米国東部の鉄道貨物会社。",
+"DAL":"Delta Air Lines。米国の大手航空会社。",
+"DHI":"D.R. Horton。米国最大の住宅建設会社。",
+"LEN":"Lennar Corp.。米国の大手住宅建設会社。",
+"NVR":"NVR Inc.。米国の住宅建設会社（受注建築モデル）。",
+"GRMN":"Garmin Ltd.。GPS・ウェアラブル機器のメーカー。",
+"KO":"Coca-Cola。炭酸飲料世界最大手。",
+"PG":"Procter & Gamble。日用品（洗剤・紙おむつ等）の世界大手。",
+"PEP":"PepsiCo。飲料・スナック菓子（Frito-Lay）の大手。",
+"PM":"Philip Morris International。米国外向けのたばこ大手。",
+"MDLZ":"Mondelez International。菓子（オレオ・リッツ）の大手。",
+"MCD":"McDonald's Corp.。世界最大のファストフードチェーン。",
+"SBUX":"Starbucks Corp.。世界最大のコーヒーチェーン。",
+"MAR":"Marriott International。世界最大級のホテルチェーン。",
+"HLT":"Hilton Worldwide。ホテル運営・フランチャイズの大手。",
+"YUM":"Yum! Brands。KFC・ピザハット・タコベルの運営会社。",
+"UNH":"UnitedHealth Group。米国最大の医療保険会社。",
+"ELV":"Elevance Health（旧Anthem）。米国の医療保険大手。",
+"CI":"The Cigna Group。米国の医療保険・PBM企業。",
+"CVS":"CVS Health。薬局チェーンと医療保険（Aetna）を併せ持つ企業。",
+"HCA":"HCA Healthcare。米国最大級の病院運営会社。",
+"LIN":"Linde plc。産業ガス世界最大手。",
+"SHW":"Sherwin-Williams。塗料の米国大手。",
+"APD":"Air Products and Chemicals。産業ガスの大手。",
+"ECL":"Ecolab Inc.。水処理・衛生管理サービス。",
+"DD":"DuPont de Nemours。特殊素材・化学の米国企業。",
+"ACN":"Accenture plc。ITコンサルティング世界最大手。",
+"PAYX":"Payroll Inc.（Paychex）。中小企業向け給与計算・人事サービス。",
+"CTAS":"Cintas Corp.。ユニフォーム・清掃サービスの大手。",
+"RSG":"Republic Services。米国の廃棄物処理会社。",
+"WM":"Waste Management。米国最大の廃棄物処理会社。",
+"NFLX":"Netflix Inc.。世界最大の動画配信サービス。",
+"DIS":"The Walt Disney Company。映画・テーマパーク・配信の大手。",
+"CMCSA":"Comcast Corp.。米国最大のケーブルテレビ・通信会社（NBCUniversal傘下）。",
+"T":"AT&T Inc.。米国の通信大手（携帯・固定）。",
+"VZ":"Verizon Communications。米国の通信大手。",
+"GWW":"W.W. Grainger。産業用資材の通販・卸売。",
+"FAST":"Fastenal Company。ねじ・工具などの産業資材卸。",
+"POOL":"Pool Corporation。プール用品の卸売最大手。",
+"WSO":"Watsco Inc.。空調機器の卸売最大手。",
+"LKQ":"LKQ Corp.。自動車の代替部品の卸売。",
+"BKR":"Baker Hughes。油田サービス・エネルギー技術の大手。",
+"HAL":"Halliburton。油田サービスの世界大手。",
+"MPC":"Marathon Petroleum。米国の製油・精製大手。",
+"PSX":"Phillips 66。石油精製・化学の米国企業。",
+"OKE":"ONEOK Inc.。天然ガスのパイプライン・処理。",
+"FCX":"Freeport-McMoRan。銅・金の鉱山会社。",
+"NEM":"Newmont Corp.。金鉱山の世界最大手。",
+"NUE":"Nucor Corp.。米国最大の電炉鋼メーカー。",
+"STLD":"Steel Dynamics。米国の電炉鋼メーカー。",
+"VMC":"Vulcan Materials。骨材（砂利・砕石）の最大手。"
+});
+Object.assign(DEFS,{
+"V":"Visa Inc.。世界最大の国際決済ネットワーク（クレジット・デビット）を運営する米国企業。",
+"MU":"Micron Technology。DRAM・NANDフラッシュを手がける米国の半導体メモリ大手。",
 "IEMG":"iShares Core MSCI Emerging Markets ETF。新興国株の低コスト・時価総額加重の代表的なETF（先進国を含まない）。",
 "VXUS":"Vanguard Total International Stock ETF。米国を除く全世界の先進国・新興国株をまとめて持つETF。",
 "DBA":"Invesco DB Agriculture Fund。とうもろこし・大豆・小麦・砂糖などの農産物先物に投資するETF。",
@@ -467,7 +557,15 @@ Object.assign(DEFS,{
 "LLY":"Eli Lilly and Company。肥満症・糖尿病治療薬（GLP-1）で急成長した米国の製薬大手。",
 "PLTR":"Palantir Technologies。政府・企業向けデータ分析基盤（AIソフト）を提供する米国企業。"
 });
-const ALL=[]; SECTIONS.forEach(function(s){ s.items.forEach(function(it){ if(ALL.indexOf(it[1])<0) ALL.push(it[1]); }); });
+/* サブセクション（見出し行）。実データを持たない擬似項目として items に混ぜる。
+   ティッカーを "__SUB__:名前" にしておけば、取得・集計・色計算のどこにも載らない。
+   これで SECTIONS の構造を変えずに「セクション内の分類」を表現できる。 */
+function isSub(it){ return String(it&&it[1]).indexOf("__SUB__")===0; }
+function realItems(s){ return (s.items||[]).filter(function(it){ return !isSub(it); }); }
+function subHdr(n){
+  return "<div class=\"subh\"><span>"+esc(n)+"</span></div>";
+}
+const ALL=[]; SECTIONS.forEach(function(s){ s.items.forEach(function(it){ if(isSub(it)) return; if(ALL.indexOf(it[1])<0) ALL.push(it[1]); }); });
 const CDATA={};       // ticker -> {map:{"YYYY-MM":終値}, last, asof, adj:bool}
 const TRIED={};       // ticker -> 取得を試行して失敗した
 let CUR=0, ASOF="", ASOFT="", SRCS={}, ATT=0, OKN=0, FETCHING=false, LASTTRY=0, RETRY_T=null, STARTED=false;
@@ -628,7 +726,7 @@ function rowHtml(it,V,mx,hasData){
 }
 function top5Html(s,V,complete){
   if(!complete) return "";
-  const arr=s.items.map(function(it){ return [it[0],V[it[1]]]; })
+  const arr=realItems(s).map(function(it){ return [it[0],V[it[1]]]; })
                   .filter(function(x){ return typeof x[1]==="number"; })
                   .sort(function(a,b){ return b[1]-a[1]; });
   if(!arr.length) return "";
@@ -640,9 +738,9 @@ function top5Html(s,V,complete){
   + "</div>";
 }
 function sectionHtml(s,idx,V){
-  const vs=s.items.map(function(it){ return V[it[1]]; }).filter(function(v){ return typeof v==="number"; });
+  const vs=realItems(s).map(function(it){ return V[it[1]]; }).filter(function(v){ return typeof v==="number"; });
   const hasData=vs.length>0, mx=hasData? Math.max.apply(null,vs.map(Math.abs)) : 1;
-  const complete=s.items.every(function(it){ return typeof V[it[1]]==="number"; });
+  const complete=realItems(s).every(function(it){ return typeof V[it[1]]==="number"; });
   let out="",buf=[];
   const flush=function(){ if(buf.length){ out+="<div class=\"hlbox\">"+buf.join("")+"</div>"; buf=[]; } };
   s.items.forEach(function(it){
@@ -729,7 +827,10 @@ let rt; window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTim
 const CHUNK=20, TIMEOUT=3500, RETRY_WAIT=60000;
 /* 取得元ごとの上限。正常時は200〜650msで返るため、長く待つ意味がない */
 const T={spark:2200,chart:2200,treasury:2200,ecb:3000,em:4500};
-const GLOBAL_DEADLINE=1600;     /* ETFの表示確定は1.2秒。金利はさらに背後で継続 */   /* 起動からこれを超えたら打ち切り、前回値で確定 */
+/* 銘柄が107→131件に増え、20件ずつの6〜7チャンクになった。1.6秒では後半のチャンクが
+   丸ごと打ち切られ、末尾セクション（その他ETF）が「取得できません」で埋まっていた。
+   予算を6秒に広げ、打ち切りは「進行中のチャンクを捨てない」位置で行う。 */
+const GLOBAL_DEADLINE=6000;
 /* ================= 第1層：Cache API（stale-while-revalidate）=================
    以前は cache:"no-store" でブラウザキャッシュを毎回捨てていた（再訪でも実測1秒前後）。
    キャッシュヒット時は即返し、裏で再取得してキャッシュを更新する（表示は待たせない）。 */
@@ -1977,7 +2078,7 @@ async function ensureData(){
     const total=ALL.length;
     const prog=function(){
       let done=0;
-      SECTIONS.forEach(function(s){ if(s.items.every(function(it){ return CDATA[it[1]]||TRIED[it[1]]; })) done++; });
+      SECTIONS.forEach(function(s){ if(realItems(s).every(function(it){ return CDATA[it[1]]||TRIED[it[1]]; })) done++; });
       setStatus("","最新データを取得しています… <b>"+done+"/"+SECTIONS.length+"セクション</b>",done/SECTIONS.length);
       renderSoon();
     };
@@ -1987,7 +2088,9 @@ async function ensureData(){
     let ci=0, ai=0, okChunks=0;
     async function wc(){
       while(ci<chunks.length){
-        if(Date.now()>DL) return;
+        /* 期限内でも、残りチャンクが多いときは最後まで走らせる（1.6秒時代の打ち切りで
+           末尾セクションが丸ごと欠測していた）。 */
+        if(Date.now()>DL && ci>0) return;
         const idx=ci++, got=await fetchChunk(chunks[idx],idx);
         if(got){
           okChunks++;
@@ -2157,8 +2260,9 @@ window.addEventListener("pageshow",function(e){ if(e.persisted) maybeReload(); }
 
 /* ================= 定義の描画（タップで開く） ================= */
 document.getElementById("defs").innerHTML=SECTIONS.map(function(s){
-  return "<details class=\"defsec\"><summary>"+esc(s.t)+"<span class=\"n\">"+s.items.length+"要素</span></summary><dl>"
+  return "<details class=\"defsec\"><summary>"+esc(s.t)+"<span class=\"n\">"+realItems(s).length+"要素</span></summary><dl>"
    + s.items.map(function(it){
+       if(isSub(it)) return "<dt class=\"subd\">"+esc(it[0])+"</dt>";
        return "<dt>"+esc(it[0])+"（"+esc(it[1])+"）"+(it[3]==="dv"?" 配":"")+"</dt><dd>"
          +(NAMES[it[1]]? "<em>"+esc(NAMES[it[1]])+"</em><br>":"")+esc(DEFS[it[1]]||RATEDEFS[it[1]]||"（説明未登録）")+"</dd>";
      }).join("")+"</dl></details>";
