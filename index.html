@@ -246,7 +246,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0426</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0428</span>
 </footer>
 
 <script>
@@ -720,6 +720,7 @@ function d1Badge(tk){
        場中でなければ従来どおり、タブ名と違う日付のときだけ出す */
     if(live) return "<i class=\"d1dt live\" title=\"この行は場中の値（未確定）："+d+"\">"+mmdd+"場中</i>";
     if(!base||d===base) return "";
+    return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+mmdd+"</i>";
   }catch(e){ return ""; }
 }
 function rowHtml(it,V,mx,hasData){
@@ -1813,38 +1814,80 @@ async function fetchEmBatch(list){
    r.jina.ai のレート予算（20req/60秒）を食い潰して全滅していた（実測：印・中・英・伯・韓）。
    ulist.np は f2=現在値 / f3=前日比% / f18=前日終値 / f12=コード を1回で返す。
    これを金利の主経路にし、kline は月次ヒストリの補完にだけ使う。 */
+const EMTZ={"US2Y":"America/New_York","US10Y":"America/New_York","JP2Y":"Asia/Tokyo","JP10Y":"Asia/Tokyo",
+ "CN2Y":"Asia/Shanghai","CN10Y":"Asia/Shanghai","GB2Y":"Europe/London","GB10Y":"Europe/London",
+ "DE2Y":"Europe/Berlin","DE10Y":"Europe/Berlin","BR10Y":"America/Sao_Paulo","KR2Y":"Asia/Seoul",
+ "KR10Y":"Asia/Seoul","IN2Y":"Asia/Kolkata","IN10Y":"Asia/Kolkata"};
+function emYmd(t,tz){
+  if(!t||!isFinite(t)) return null;
+  try{
+    const p=new Intl.DateTimeFormat("en-CA",{timeZone:tz||"UTC",year:"numeric",month:"2-digit",day:"2-digit"})
+      .formatToParts(new Date(t*1000)).reduce(function(a,x){ a[x.type]=x.value; return a; },{});
+    return p.year+"-"+p.month+"-"+p.day;
+  }catch(e){ return new Date(t*1000).toISOString().slice(0,10); }
+}
+function emApply(arr,ref){
+  let n=0;
+  (arr||[]).forEach(function(d){
+    if(!d||!d.f12) return;
+    const tk=String(d.f12), m=CDATA[tk]; if(!m) return;
+    const px=parseFloat(d.f2), ch=parseFloat(d.f3), pv=parseFloat(d.f18);
+    if(isFinite(px)&&px>0) m.last=px;
+    if(!isFinite(ch)) return;
+    m.d1=+ch.toFixed(2);
+    if(isFinite(px)&&isFinite(pv)&&pv>0) m.d1pt=+(px-pv).toFixed(3);
+    else if(isFinite(px)&&px>0&&ch!==-100) m.d1pt=+(px-px/(1+ch/100)).toFixed(3);
+    /* 日付は「東財の更新時刻(f124)」から現地時間で作る。以前はタブ名の日付を
+       そのまま入れており、実際は11/6の公表値でも11/10として扱われていた。 */
+    const dd=emYmd(parseFloat(d.f124),EMTZ[tk]);
+    if(dd) m.d1d=dd; else if(ref) m.d1d=ref;
+    /* 更新時刻が直近30分以内なら「場中（未確定）」とみなす。
+       東財のクォートは取引時間中に動くため、確定値と同じ表示にすると誤解を生む。
+       市場が閉じていれば f124 が古いままなので自動的に日付のみに戻る。 */
+    const age=isFinite(parseFloat(d.f124))? (Date.now()/1000-parseFloat(d.f124)) : 1e9;
+    if(age>=0 && age<1800) m.mstate="REGULAR"; else delete m.mstate;
+    n++;
+  });
+  return n;
+}
 async function fetchEmRateQuote(){
-  const codes=[];
-  RATEKEYS.forEach(function(tk){ if(EMCODES[tk]) codes.push(tk); });
+  const codes=RATEKEYS.filter(function(tk){ return !!EMCODES[tk]; });
   if(!codes.length) return 0;
-  const q="https://{0}.eastmoney.com/api/qt/ulist.np/get?secids="
-    +codes.map(function(tk){ return "171."+EMCODES[tk]; }).join(",")
-    +"&fields=f2,f3,f12,f18&fltt=2";
+  const ref=d1Date()||null;
+  const mk=function(host,list){
+    return "https://"+host+".eastmoney.com/api/qt/ulist.np/get?secids="
+      +list.map(function(tk){ return "171."+EMCODES[tk]; }).join(",")
+      +"&fields=f2,f3,f12,f18,f124&fltt=2";
+  };
   let n=0;
   const HOSTS=["push2his","push2delay"];
-  for(let h=0;h<HOSTS.length;h++){
+  for(let h=0;h<HOSTS.length && !n;h++){
     let r=null;
-    try{ r=await fetchDirect(q.replace("{0}",HOSTS[h]),4000); }catch(e){}
-    if(!r||!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+q.replace("{0}","push2his"),6000); }catch(e){} }
+    /* 東財は Origin を返すCORS対応ホスト。直取得を主経路にし、r.jina.ai の
+       20req/60秒予算（日次パスが大量に使う）を消費しない */
+    try{ r=await fetchDirect(mk(HOSTS[h],codes),4500); }catch(e){}
     if(!r||!r.body) continue;
     let j=null; try{ j=jsonOf(r.body); }catch(e){}
     const arr=(j&&j.data&&j.data.diff)||[];
-    if(!arr.length) continue;
-    const ref=d1Date()||null;
-    arr.forEach(function(d){
-      if(!d||!d.f12) return;
-      const tk=String(d.f12), m=CDATA[tk]; if(!m) return;
-      const px=parseFloat(d.f2), ch=parseFloat(d.f3), pv=parseFloat(d.f18);
-      if(isFinite(px)&&px>0){ m.last=px; }
-      if(isFinite(ch)&&isFinite(px)&&px>0){
-        m.d1=+ch.toFixed(2);
-        m.d1pt=(isFinite(pv)&&pv>0)? +(px-pv).toFixed(3) : +((px-px/(1+ch/100))).toFixed(3);
-        if(ref) m.d1d=ref;
-        n++;
-      }
-    });
-    if(n) break;
-    try{ await new Promise(function(z){ setTimeout(z,300); }); }catch(e){}
+    if(arr.length) n+=emApply(arr,ref);
+  }
+  if(!n){
+    try{
+      const r2=await fetchRaw("https://r.jina.ai/"+mk("push2his",codes),7000);
+      if(r2&&r2.body){ const j2=jsonOf(r2.body); const a2=(j2&&j2.data&&j2.data.diff)||[]; if(a2.length) n+=emApply(a2,ref); }
+    }catch(e){}
+  }
+  /* 一括が一部欠ける場合の個別フォールバック（直取得のみ・プロキシ予算ゼロ） */
+  const miss=codes.filter(function(tk){ const m=CDATA[tk]; return !m || typeof m.d1!=="number"; });
+  for(let i=0;i<miss.length;i++){
+    const tk=miss[i];
+    let r=null;
+    try{ r=await fetchDirect(mk("push2his",[tk]),3500); }catch(e){}
+    if(!r||!r.body) continue;
+    let j=null; try{ j=jsonOf(r.body); }catch(e){}
+    const arr=(j&&j.data&&j.data.diff)||[];
+    if(arr.length) n+=emApply(arr,ref);
+    try{ await new Promise(function(z){ setTimeout(z,120); }); }catch(e){}
   }
   try{ if(n) saveRateCache(); }catch(e){}
   return n;
