@@ -263,11 +263,11 @@ const SECTIONS=[
  {t:"米国主要株価指数",col:1,items:[["S&P500指数","^GSPC","hl"],["S&P中型株400指数","^SP400","hl"],["S&P小型株600指数","^SP600","hl"],["ダウ平均指数","^DJI","hl"],["ナスダック100指数","^NDX","hl"],["ラッセル1000指数","^RUI","hl"],["ラッセル2000指数","^RUT","hl"],["ラッセル3000指数","^RUA","hl"],["S&P500グロースETF","IVW","hl"],["S&P中型400グロースETF","IJK","hl"],["S&P小型600グロースETF","IJT","hl"],["S&P500バリューETF","IVE","hl"],["S&P中型400バリューETF","IJJ","hl"],["S&P小型600バリューETF","IJS","hl"],["ダウ平均配当株ETF","DVY","hl","dv"],["S&P500均等ウェイトETF","RSP","hl"]]},
 {t:"S&P500セクターETF",col:1,items:[["一般消費財","XLY","hl"],["生活必需品","XLP","hl"],["エネルギー","XLE","hl"],["金融","XLF","hl"],["ヘルスケア","XLV","hl"],["工業","XLI","hl"],["素材","XLB","hl"],["テクノロジー","XLK","hl"],["通信サービス","XLC","hl"],["公益","XLU","hl"],["不動産","XLRE","hl"]]},
  {t:"主要国株式指数",col:2,items:[['米国',"^GSPC","S&P500","hl"],['日本',"^N225","日経平均","hl"],["インド","^BSESN","SENSEX"],["中国","000001.SS","上海総合"],["香港","^HSI","ハンセン"],["ドイツ","^GDAXI","DAX"],["英国","^FTSE","FTSE100"],["フランス","^FCHI","CAC40"],["イタリア","FTSEMIB.MI","FTSE MIB"],["スペイン","^IBEX","IBEX35"],["カナダ","^GSPTSE","TSX"],["豪州","^AXJO","ASX200"],["ブラジル","^BVSP","ボベスパ"],["メキシコ","^MXX","IPC"],["南アフリカ","EZA","南アフリカETF"],["中東","EIS","中東ETF"],["新興国","EEM","新興国ETF"]]},
- {t:"その他ETF",col:2,items:[["VIX恐怖指数","^VIX"],["プット/コールレシオ","PCC"],
-  ["テールリスク指数","^SKEW"],["米国大型株500(S&P500)","SPY"],["米国高配当30(ダウ)","DIA"],
-  ["米国ハイテク100(ナスダック)","QQQ"],["米国を除く全世界株","VXUS"],["米国小型株2000","IWM"],
-  ["欧州・豪・極東の先進国株","EFA"],["新興国株(コア)","IEMG"],["新興国株(大型)","EEM"],
-  ["米国半導体25〜30社","SOXX"],["金鉱山株","GDX"],["金現物","GLD"],["ビットコイン現物","IBIT"]]},
+ {t:"その他ETF",col:2,items:[["VIX恐怖指数(^VIX)","^VIX"],["プット/コールレシオ(PCC)","PCC"],
+  ["テールリスク指数(^SKEW)","^SKEW"],["米国大型株500(S&P500)(SPY)","SPY"],["米国高配当30(ダウ)(DIA)","DIA"],
+  ["米国ハイテク100(ナスダック)(QQQ)","QQQ"],["米国を除く全世界株(VXUS)","VXUS"],["米国小型株2000(IWM)","IWM"],
+  ["欧州・豪・極東の先進国株(EFA)","EFA"],["新興国株コア(IEMG)","IEMG"],["新興国株大型(EEM)","EEM"],
+  ["米国半導体25〜30社(SOXX)","SOXX"],["金鉱山株(GDX)","GDX"],["金現物(GLD)","GLD"],["ビットコイン現物(IBIT)","IBIT"]]},
  {t:"コモディティETF",col:3,items:[["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["プラチナ(PPLT)","PPLT"],["コモディティ全般(DBC)","DBC"],["金属鉱山(XME)","XME"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
   {t:"暗号通貨",col:3,items:[["ビットコイン/ドル","BTC-USD"],["イーサリアム/ドル","ETH-USD"],["リップル/ドル","XRP-USD"],["ライトコイン/ドル","LTC-USD"],["ソラナ/ドル","SOL-USD"],["ドージコイン/ドル","DOGE-USD"],["カルダノ/ドル","ADA-USD"],["チェーンリンク/ドル","LINK-USD"],["BNB/ドル","BNB-USD"],["アバランチ/ドル","AVAX-USD"],["ビットコイン/円","BTC-JPY"],["イーサリアム/円","ETH-JPY"],["リップル/円","XRP-JPY"]]}
 ];
@@ -1797,6 +1797,47 @@ async function fetchEmBatch(list){
   });
   return out;
 }
+/* 東財の金利13銘柄を「1リクエスト」でまとめて最新値＋前日比％を取る。
+   push2his の kline（1銘柄1リクエスト）は断続的に空応答を返し、しかも13銘柄×4回試行で
+   r.jina.ai のレート予算（20req/60秒）を食い潰して全滅していた（実測：印・中・英・伯・韓）。
+   ulist.np は f2=現在値 / f3=前日比% / f18=前日終値 / f12=コード を1回で返す。
+   これを金利の主経路にし、kline は月次ヒストリの補完にだけ使う。 */
+async function fetchEmRateQuote(){
+  const codes=[];
+  RATEKEYS.forEach(function(tk){ if(EMCODES[tk]) codes.push(tk); });
+  if(!codes.length) return 0;
+  const q="https://{0}.eastmoney.com/api/qt/ulist.np/get?secids="
+    +codes.map(function(tk){ return "171."+EMCODES[tk]; }).join(",")
+    +"&fields=f2,f3,f12,f18&fltt=2";
+  let n=0;
+  const HOSTS=["push2his","push2delay"];
+  for(let h=0;h<HOSTS.length;h++){
+    let r=null;
+    try{ r=await fetchDirect(q.replace("{0}",HOSTS[h]),4000); }catch(e){}
+    if(!r||!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+q.replace("{0}","push2his"),6000); }catch(e){} }
+    if(!r||!r.body) continue;
+    let j=null; try{ j=jsonOf(r.body); }catch(e){}
+    const arr=(j&&j.data&&j.data.diff)||[];
+    if(!arr.length) continue;
+    const ref=d1Date()||null;
+    arr.forEach(function(d){
+      if(!d||!d.f12) return;
+      const tk=String(d.f12), m=CDATA[tk]; if(!m) return;
+      const px=parseFloat(d.f2), ch=parseFloat(d.f3), pv=parseFloat(d.f18);
+      if(isFinite(px)&&px>0){ m.last=px; }
+      if(isFinite(ch)&&isFinite(px)&&px>0){
+        m.d1=+ch.toFixed(2);
+        m.d1pt=(isFinite(pv)&&pv>0)? +(px-pv).toFixed(3) : +((px-px/(1+ch/100))).toFixed(3);
+        if(ref) m.d1d=ref;
+        n++;
+      }
+    });
+    if(n) break;
+    try{ await new Promise(function(z){ setTimeout(z,300); }); }catch(e){}
+  }
+  try{ if(n) saveRateCache(); }catch(e){}
+  return n;
+}
 async function fetchEm(tk){
   const code=EMCODES[tk]; if(!code) return null;
   const d0=(YR-2)+"0601", d1=YR+pad2(MO)+pad2(NOW.getDate());
@@ -2928,6 +2969,8 @@ async function fillD1(force){
       const m=CDATA[tk]; if(!m) return;
       if(typeof m.d1==="number"){ if(m.asof) m.d1d=m.asof; }
     });
+    /* 金利は東財の一括クォートで先に確定させる（1リクエスト・13銘柄） */
+    try{ await fetchEmRateQuote(); }catch(e){}
     await d1PassSpark(cut);
     let rest=ALL.filter(function(tk){ return !D1SKIP[tk] && RATEKEYS.indexOf(tk)<0 && (!CDATA[tk] || typeof CDATA[tk].d1!=="number" || (cut&&CDATA[tk].d1d!==cut)); });
     /* chart側にも上限を設ける（プロキシ頼みで数十秒待つのを防ぐ） */
