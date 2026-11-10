@@ -246,7 +246,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0436</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0437</span>
 </footer>
 
 <script>
@@ -704,7 +704,7 @@ try{ window.d1diag=d1diag; }catch(e){}
 /* ===== 画面上で日付の内訳を確認する（コンソール不要） =====
    index.html?diag=1 で開くと、全銘柄の日付の内訳を上部に表示する。
    各行をタップ（クリック）するとその行だけ詳しく出る。 */
-const DIAG_ON=(function(){ try{ return /(\?|&)diag=1/.test(location.search); }catch(e){ return false; } })();
+let DIAG_ON=(function(){ try{ return /(\?|&)diag=1/.test(location.search); }catch(e){ return false; } })();
 let DIAG_BOX=null;
 function diagText(){
   const lines=[];
@@ -718,6 +718,17 @@ function diagText(){
       d1Expect(tk)||"-", d1RowDate(tk)||"-", d1IsLive(tk)?"LIVE":"", tzOf(tk)].join("\t"));
   });
   return lines.join("\n");
+}
+function diagMount(){
+  try{
+    if(document.getElementById("diagbtn")) return;
+    const b=document.createElement("button");
+    b.id="diagbtn"; b.textContent="日付診断";
+    b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99998;padding:5px 9px;border-radius:7px;"
+      +"border:1px solid #4a90d9;background:#13233d;color:#cfe3ff;font-size:10px;opacity:.85;";
+    b.onclick=function(){ DIAG_ON=!DIAG_ON; if(DIAG_ON){ diagRender(); } else if(DIAG_BOX){ DIAG_BOX.style.display="none"; } };
+    document.body.appendChild(b);
+  }catch(e){}
 }
 function diagRender(){
   if(!DIAG_ON) return;
@@ -741,6 +752,7 @@ function diagRender(){
       DIAG_BOX.appendChild(bar); DIAG_BOX.appendChild(pre);
       document.body.appendChild(DIAG_BOX);
     }
+    DIAG_BOX.style.display="block";
     const pre=document.getElementById("diagpre");
     if(pre) pre.textContent=diagText();
   }catch(e){}
@@ -903,6 +915,7 @@ function setStatus(cls,html,prog){
   if(prog!=null) document.querySelector("#pbar i").style.width=Math.round(prog*100)+"%";
 }
 setInterval(function(){
+  try{ diagMount(); }catch(e){}
   if(document.hidden){ try{ d1Sync(); }catch(e){} return; }
   let anyUndef=false;
   for(let i=0;i<ALL.length;i++){ if(!CDATA[ALL[i]] && (!pastDL()||PENDING[ALL[i]])){ anyUndef=true; break; } }
