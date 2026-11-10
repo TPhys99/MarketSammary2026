@@ -196,6 +196,10 @@ body{
 .chov[hidden]{display:none}
 .chsheet.hmmode{background:#000;border-color:#2a3138}
 .chsheet.hmmode .chhd b,.chsheet.hmmode .chft{color:#e9eef5}
+/* 凡例の%表記(10.5px)はSVG(viewBox 340)を実幅に拡大して描かれるため、
+   実表示では約1.5倍。タイトルと上昇/下落の行も同じ見た目の大きさに揃える */
+.chsheet.hmmode .chhd b{font-size:15.5px;line-height:1.4}
+.chsheet.hmmode .chft{font-size:15px;line-height:1.7}
 .chsheet.hmmode .chft{color:#9aa4b2}
 .hmhit{cursor:pointer}
 .hmhit:hover{filter:brightness(1.06)}
@@ -254,9 +258,15 @@ const SECTIONS=[
  {t:"為替",col:0,items:[["ドル指数","DX-Y.NYB","hl"],["ドル/円","JPY=X","hl"],["ユーロ/ドル","EURUSD=X"],["ドル/ルピー","USDINR=X"],["ルピー/円","INRJPY=X"]]},
  {t:"米国主要株価指数",col:1,items:[["S&P500指数","^GSPC","hl"],["S&P中型株400指数","^SP400","hl"],["S&P小型株600指数","^SP600","hl"],["ダウ平均指数","^DJI","hl"],["ナスダック100指数","^NDX","hl"],["ラッセル1000指数","^RUI","hl"],["ラッセル2000指数","^RUT","hl"],["ラッセル3000指数","^RUA","hl"],["S&P500グロースETF","IVW","hl"],["S&P中型400グロースETF","IJK","hl"],["S&P小型600グロースETF","IJT","hl"],["S&P500バリューETF","IVE","hl"],["S&P中型400バリューETF","IJJ","hl"],["S&P小型600バリューETF","IJS","hl"],["ダウ平均配当株ETF","DVY","hl","dv"],["S&P500均等ウェイトETF","RSP","hl"]]},
  {t:"S&P500セクターETF",col:1,items:[["一般消費財","XLY","hl"],["生活必需品","XLP","hl"],["エネルギー","XLE","hl"],["金融","XLF","hl"],["ヘルスケア","XLV","hl"],["工業","XLI","hl"],["素材","XLB","hl"],["テクノロジー","XLK","hl"],["通信サービス","XLC","hl"],["公益","XLU","hl"],["不動産","XLRE","hl"]]},
- {t:"主要国株式指数",col:2,items:[['日本',"^N225","日経平均","hl"],["インド","^BSESN","SENSEX"],["中国","000001.SS","上海総合"],["香港","^HSI","ハンセン"],["ドイツ","^GDAXI","DAX"],["英国","^FTSE","FTSE100"],["フランス","^FCHI","CAC40"],["イタリア","FTSEMIB.MI","FTSE MIB"],["スペイン","^IBEX","IBEX35"],["カナダ","^GSPTSE","TSX"],["豪州","^AXJO","ASX200"],["ブラジル","^BVSP","ボベスパ"],["メキシコ","^MXX","IPC"],["南アフリカ","EZA","南アフリカETF"],["中東","EIS","中東ETF"],["新興国","EEM","新興国ETF"]]},
- {t:"その他のETF",col:2,items:[["半導体株","SMH"],["VIX","^VIX"],["PCC","PCC"]]},
- {t:"コモディティETF",col:3,items:[["コモディティ全般(DBC)","DBC"],["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["プラチナ(PPLT)","PPLT"],["金属鉱山(XME)","XME"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
+ {t:"主要国株式指数",col:2,items:[['米国',"^GSPC","S&P500","hl"],['日本',"^N225","日経平均","hl"],["インド","^BSESN","SENSEX"],["中国","000001.SS","上海総合"],["香港","^HSI","ハンセン"],["ドイツ","^GDAXI","DAX"],["英国","^FTSE","FTSE100"],["フランス","^FCHI","CAC40"],["イタリア","FTSEMIB.MI","FTSE MIB"],["スペイン","^IBEX","IBEX35"],["カナダ","^GSPTSE","TSX"],["豪州","^AXJO","ASX200"],["ブラジル","^BVSP","ボベスパ"],["メキシコ","^MXX","IPC"],["南アフリカ","EZA","南アフリカETF"],["中東","EIS","中東ETF"],["新興国","EEM","新興国ETF"]]},
+ {t:"その他ETF、指数など",col:2,items:[["半導体株","SMH"],["VIX","^VIX"],["PCC","PCC"],
+  ["新興国株(IEMG)","IEMG"],["米国除く全世界株(VXUS)","VXUS"],
+  ["農産物(DBA)","DBA"],["ベースメタル(DBB)","DBB"],["貴金属(DBP)","DBP"],["コモディティ全般(DBC)","DBC"],["エネルギー(DBE)","DBE"],
+  ["アルファベット(GOOG)","GOOG"],["アップル(AAPL)","AAPL"],["メタ(META)","META"],["アマゾン(AMZN)","AMZN"],
+  ["マイクロソフト(MSFT)","MSFT"],["テスラ(TSLA)","TSLA"],["エヌビディア(NVDA)","NVDA"],["TSMC(TSM)","TSM"],
+  ["マスターカード(MA)","MA"],["SKハイニックス(SKHY)","SKHY"],["インテル(INTC)","INTC"],["AMD(AMD)","AMD"],
+  ["アーム(ARM)","ARM"],["クアルコム(QCOM)","QCOM"],["イーライリリー(LLY)","LLY"],["パランティア(PLTR)","PLTR"]]},
+ {t:"コモディティETF",col:3,items:[["原油(USO)","USO"],["天然ガス(UNG)","UNG"],["金鉱山(GDX)","GDX"],["金(GLD)","GLD"],["銀鉱山(SIL)","SIL"],["銀(SLV)","SLV"],["銅鉱山(COPX)","COPX"],["銅(CPER)","CPER"],["プラチナ(PPLT)","PPLT"],["コモディティ全般(DBC)","DBC"],["金属鉱山(XME)","XME"],["ベースメタル(DBB)","DBB"],["小麦(WEAT)","WEAT"],["コーン(CORN)","CORN"],["大豆(SOYB)","SOYB"]]},
   {t:"暗号通貨",col:3,items:[["ビットコイン/ドル","BTC-USD"],["イーサリアム/ドル","ETH-USD"],["リップル/ドル","XRP-USD"],["ライトコイン/ドル","LTC-USD"],["ソラナ/ドル","SOL-USD"],["ドージコイン/ドル","DOGE-USD"],["カルダノ/ドル","ADA-USD"],["チェーンリンク/ドル","LINK-USD"],["BNB/ドル","BNB-USD"],["アバランチ/ドル","AVAX-USD"],["ビットコイン/円","BTC-JPY"],["イーサリアム/円","ETH-JPY"],["リップル/円","XRP-JPY"]]}
 ];
 /* 分配金込み（調整後終値）で取得する要素＝債券7＋DVY。それ以外は一括API（価格ベース） */
@@ -429,7 +439,35 @@ document.getElementById("lgnote").innerHTML=
  +" 例：+5%はどの月・どのまとまりでも同じ淡い緑、−50%はどの行でも同じ濃い赤。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。";
 
 /* ================= 状態 ================= */
-const ALL=[]; SECTIONS.forEach(function(s){ s.items.forEach(function(it){ ALL.push(it[1]); }); });
+/* 同じ銘柄が複数セクションに出ることがある（例：^GSPC を米国指数と主要国指数の両方に表示）。
+   ALL は「取得対象の一覧」なので重複を除く（二重取得・進捗の二重計上を防ぐ）。 */
+/* 追加銘柄（PCCの下に並べたETF・個別株）の定義 */
+Object.assign(DEFS,{
+"IEMG":"iShares Core MSCI Emerging Markets ETF。新興国株の低コスト・時価総額加重の代表的なETF（先進国を含まない）。",
+"VXUS":"Vanguard Total International Stock ETF。米国を除く全世界の先進国・新興国株をまとめて持つETF。",
+"DBA":"Invesco DB Agriculture Fund。とうもろこし・大豆・小麦・砂糖などの農産物先物に投資するETF。",
+"DBB":"Invesco DB Base Metals Fund。アルミ・銅・亜鉛などの工業用ベースメタル先物に投資するETF。",
+"DBP":"Invesco DB Precious Metals Fund。金・銀などの貴金属先物に投資するETF。",
+"DBC":"Invesco DB Commodity Index Tracking Fund。エネルギー・金属・農産物を広く持つ総合コモディティETF。",
+"DBE":"Invesco DB Energy Fund。原油・暖房油・ガソリン・天然ガスなどエネルギー先物に投資するETF。",
+"GOOG":"Alphabet Inc.（Googleの持株会社）。検索・広告・クラウド・YouTubeを柱とする米国の大手テック企業。",
+"AAPL":"Apple Inc.。iPhone・Mac・サービスを柱とする米国の大手テック企業。",
+"META":"Meta Platforms Inc.。Facebook・Instagram・WhatsAppを運営する米国の広告大手。",
+"AMZN":"Amazon.com Inc.。EC（通販）とAWS（クラウド）を柱とする米国の大手企業。",
+"MSFT":"Microsoft Corp.。Windows・Office・Azure（クラウド）を柱とする米国の大手ソフトウェア企業。",
+"TSLA":"Tesla Inc.。電気自動車と蓄電池・エネルギー事業を展開する米国の企業。",
+"NVDA":"NVIDIA Corp.。GPUとAI半導体で世界最大手の米国企業。",
+"TSM":"Taiwan Semiconductor Manufacturing（TSMC）。世界最大の半導体受託製造（ファウンドリ）企業。台湾上場のADR。",
+"MA":"Mastercard Inc.。世界2位の国際決済ネットワークを運営する米国企業。",
+"SKHY":"SK hynix Inc. の米国預託証券（ADR）。DRAM・NANDフラッシュを手がける韓国の半導体大手。",
+"INTC":"Intel Corp.。CPUと半導体製造（ファウンドリ）を手がける米国の半導体大手。",
+"AMD":"Advanced Micro Devices。CPU・GPUを手がける米国の半導体企業。",
+"ARM":"Arm Holdings plc。スマートフォン向けCPU設計（IPライセンス）で圧倒的シェアを持つ英国系企業。",
+"QCOM":"Qualcomm Inc.。スマートフォン向けSoCと通信特許ライセンスが主力の米国企業。",
+"LLY":"Eli Lilly and Company。肥満症・糖尿病治療薬（GLP-1）で急成長した米国の製薬大手。",
+"PLTR":"Palantir Technologies。政府・企業向けデータ分析基盤（AIソフト）を提供する米国企業。"
+});
+const ALL=[]; SECTIONS.forEach(function(s){ s.items.forEach(function(it){ if(ALL.indexOf(it[1])<0) ALL.push(it[1]); }); });
 const CDATA={};       // ticker -> {map:{"YYYY-MM":終値}, last, asof, adj:bool}
 const TRIED={};       // ticker -> 取得を試行して失敗した
 let CUR=0, ASOF="", ASOFT="", SRCS={}, ATT=0, OKN=0, FETCHING=false, LASTTRY=0, RETRY_T=null, STARTED=false;
@@ -476,6 +514,7 @@ function valForPage(m,p,tk){
     /* 値があれば必ず出す（PCC のようにYahoo日足は無いが自前系列から算出できるものを含む）。
        値が無い場合だけ、対象外(D1SKIP)は即「—」、それ以外は期限内「取得中」 */
     if(typeof m.d1==="number"&&isFinite(m.d1)) return +m.d1.toFixed(2);
+    { const st=D1STORE[tk]; if(st&&typeof st[0]==="number"&&isFinite(st[0])&&(!p.date||st[1]===p.date)) return +st[0].toFixed(2); }
     return D1SKIP[tk]? null : (D1_FIN? null : undefined);
   }
   if(p.id==="ytd"){
@@ -529,13 +568,25 @@ function pageValsInner(){
 /* ================= 描画 ================= */
 /* 最新1日タブで「その行の日付」がタブ名の日付と違う場合に添える小さな日付バッジ。
    例：価格は11/9だが米財務省・ECBの金利は11/6 → 行に「11/6」と出して取り違えを防ぐ */
+function d1RowDate(tk){
+  const m=CDATA[tk];
+  if(m){
+    if(/RR$/.test(tk)){
+      const rm=REALMAP[tk], nom=rm&&CDATA[rm[0]];
+      const d=(nom&&(d1Ymd(nom.d1d)||d1Ymd(nom.asof)))||null;
+      if(d) return d;
+    }
+    const d=d1Ymd(m.d1d)||d1Ymd(m.asof);
+    if(d) return d;
+  }
+  const st=D1STORE[tk];
+  return st? (d1Ymd(st[1])||null) : null;
+}
 function d1Badge(tk){
   try{
     const p=PERIODS[CUR]; if(!p||!p.d1) return "";
-    const m=CDATA[tk]; if(!m) return "";
-    const d=m.d1d||(m.rate? m.asof : null);
-    if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d)) return "";
-    if(!p.date||d===p.date) return "";
+    const d=d1RowDate(tk);
+    if(!d||!p.date||d===p.date) return "";
     return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10)+"</i>";
   }catch(e){ return ""; }
 }
@@ -550,7 +601,7 @@ function rowHtml(it,V,mx,hasData){
     const dl=(cd&&typeof base==="number"&&typeof cd.last==="number")? +(cd.last-base).toFixed(2) : null;
     const badge=(cd&&typeof cd.last==="number")
       ? "<i class=\"rt\" title=\"10年国債利回り−CPI上昇率（CPI "+(cd.infY||"")+"年 "+(inf!==undefined?inf.toFixed(2):"-")+"%）\"><u>10年実質</u> "+cd.last.toFixed(2)+"%</i>" : "";
-    const nmRR="<div class=\"nm\">"+esc(n)+badge+"</div>";
+    const nmRR="<div class=\"nm\">"+esc(n)+badge+d1Badge(tk)+"</div>";
     if(!cd||typeof cd.last!=="number") return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl na\">取得中…</div><div class=\"bar\"></div></div>";
     if(dl===null) return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl na\">基準なし</div><div class=\"bar\"></div></div>";
     const pos=dl>0, w=Math.max(0.6,Math.min(1,Math.abs(dl)/2)*50).toFixed(1);
@@ -2372,13 +2423,13 @@ function drawHeatInner(secIdx){
   });
   const hd=document.getElementById("cht"), sb=document.getElementById("chs"), box=document.getElementById("chw"), ft=document.getElementById("chft");
   if(hd) hd.textContent=s.t+"　ヒートマップ";
-  if(sb) sb.textContent=p.label+"の騰落率／面積は騰落率の絶対値に比例（最小3%）";
+  if(sb) sb.textContent="";
   if(!rows.length){
     box.innerHTML="<div style=\"padding:26px 0;text-align:center;color:#9aa4b2;font-size:11px\">この期間の数値がまだありません</div>";
     if(ft) ft.textContent="";
     return;
   }
-  const W=340, HT=196, LEG=24, H=HT+LEG;     /* 凡例は HT より下の帯にだけ描く */
+  const W=340, HT=196, LEG=34, H=HT+LEG;     /* 凡例帯：文字10.5px＋バー10px が収まる高さ */     /* 凡例は HT より下の帯にだけ描く */
   /* 最小寸法を確保するため、下限3%を必要なら段階的に引き上げて再配置する
      （極端に細いスリット状のタイルを作らない＝文字が入らない箱を作らない） */
   let out=null, floor=0.03;
@@ -2434,23 +2485,34 @@ function drawHeatInner(secIdx){
     }
     if(body) g+="<g clip-path=\"url(#"+cid+")\">"+body+"</g>";
   });
-  /* 凡例：タイル領域(0〜HT)の外、HT+6 の帯に描く */
-  const LX=56, LW=W-112, LY=HT+6;
-  let lg="";
-  for(let k=0;k<LW;k+=2){
-    const t2=k/(LW-1), vv=(t2*2-1)*dom;
-    lg+="<rect x=\""+(LX+k)+"\" y=\""+LY+"\" width=\"2.2\" height=\"5\" fill=\""+hmColor(vv,dom)+"\"/>";
+  /* 凡例：タイル領域(0〜HT)の外の帯。
+     ・バーは画面の左右端（x=0〜W）まで伸ばす（左右の余白を無くす）
+     ・%表記はバーの上に置き、これも左右端に寄せる（左=−/中央=0/右=+）
+     ・文字は 6.4px → 10.5px へ拡大、バー高さは 5px → 10px へ倍増 */
+  const LY=HT+22, LH=10;
+  /* バーは「細い矩形の連続」ではなく、1本の<rect>＋<linearGradient>で描く。
+     以前は幅2.2pxの矩形を2px刻みで170本並べていたため、隣接する矩形の境目が
+     SVGの拡大時に縦縞として見えていた（諧調の段差ではなく描画の継ぎ目）。
+     色は Math.sqrt の0.75乗で非線形なので、等間隔の色停止点(41点)を実測値から作り、
+     その間はブラウザに補間させる（見た目は滑らか、色は hmColor と一致）。 */
+  const GID="hmgrad"+__hclip, STOPS=41;
+  let grad="<linearGradient id=\""+GID+"\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"0\">";
+  for(let s=0;s<STOPS;s++){
+    const t2=s/(STOPS-1), vv=(t2*2-1)*dom;
+    grad+="<stop offset=\""+(t2*100).toFixed(2)+"%\" stop-color=\""+hmColor(vv,dom)+"\"/>";
   }
-  lg+="<text x=\""+(LX-4)+"\" y=\""+(LY+5)+"\" text-anchor=\"end\" font-size=\"6.4\" fill=\"#9aa4b2\">−"+dom+"%</text>";
-  lg+="<text x=\""+(LX+LW/2)+"\" y=\""+(LY+5)+"\" text-anchor=\"middle\" font-size=\"6.4\" fill=\"#9aa4b2\">0</text>";
-  lg+="<text x=\""+(LX+LW+4)+"\" y=\""+(LY+5)+"\" font-size=\"6.4\" fill=\"#9aa4b2\">+"+dom+"%</text>";
+  grad+="</linearGradient>";
+  let lg=grad+"<rect x=\"0\" y=\""+LY+"\" width=\""+W+"\" height=\""+LH+"\" fill=\"url(#"+GID+")\"/>";
+  lg+="<text x=\"1\" y=\""+(LY-6)+"\" text-anchor=\"start\" font-size=\"10.5\" font-weight=\"700\" fill=\"#c3ccd8\">−"+dom+"%</text>";
+  lg+="<text x=\""+(W/2)+"\" y=\""+(LY-6)+"\" text-anchor=\"middle\" font-size=\"10.5\" font-weight=\"700\" fill=\"#c3ccd8\">0</text>";
+  lg+="<text x=\""+(W-1)+"\" y=\""+(LY-6)+"\" text-anchor=\"end\" font-size=\"10.5\" font-weight=\"700\" fill=\"#c3ccd8\">+"+dom+"%</text>";
   box.innerHTML="<svg viewBox=\"0 0 "+W+" "+H+"\" style=\"background:#000;border-radius:6px;display:block\" role=\"img\" aria-label=\"ヒートマップ\">"
     +"<defs>"+defs+"</defs><rect x=\"0\" y=\"0\" width=\""+W+"\" height=\""+H+"\" fill=\"#000\"/><g>"+g+lg+"</g></svg>";
   const sorted=rows.slice().sort(function(a,b){ return Math.abs(b.v)-Math.abs(a.v); });
   const mx=sorted[0];
   ft.innerHTML="<b style=\"color:#2bd67b\">上昇 "+rows.filter(function(r){return r.v>0;}).length+"</b> ／ <b style=\"color:#ee3a3a\">下落 "+rows.filter(function(r){return r.v<0;}).length
     +"</b>　｜　最大 <b>"+esc(mx.nm)+" "+(mx.v>0?"+":"")+(Math.round(mx.v*10)/10).toFixed(1)+"%</b>"
-    +"<br>面積＝騰落率の絶対値（最小3%）。行をタップ→月次グラフ／見出しをタップ→ヒートマップ。";
+    +"<br>面積＝騰落率の絶対値（最小3%）。";
 }
 
 function openHeat(i){
@@ -2498,6 +2560,9 @@ let D1_RUNNING=false, D1_DONE=false, D1_LASTTRY=0;
 /* 日次騰落率を持てない項目（PCCはYahooに日足系列が無い）。完了判定から除外し「—」表示にする */
 const D1SKIP={PCC:1};
 let D1_FIN=false, D1_DL=Date.now()+18000, D1_CHART_BUDGET=0;
+/* 日次騰落率の独立ストア。スナップショットが失効していても当日分を即再表示できるよう、
+   CDATA とは別に保持する（毎回フル取得していたのが「最新1日が遅い」主因）。 */
+const D1STORE={};
 /* 最新1日は月次(1.6秒)とは別枠の期限を持つ。期限内は「取得中」、超過後は「取得できません」 */
 function d1Left(){ return D1_FIN? 0 : Math.max(0,Math.ceil((D1_DL-Date.now())/1000)); }
 /* 取得済みの日次騰落率をlocalStorageへ保存（次回起動時に通信ゼロで復元） */
@@ -2512,9 +2577,10 @@ function d1Load(){
     const j=JSON.parse(localStorage.getItem(D1_KEY)||"null"); if(!j||!j.d) return 0;
     let n=0;
     Object.keys(j.d).forEach(function(tk){
-      const m=CDATA[tk]; if(!m||typeof m.d1==="number") return;
       const a=j.d[tk]||[]; if(typeof a[0]!=="number") return;
-      m.d1=a[0]; if(a[1]) m.d1d=a[1]; n++;
+      D1STORE[tk]=[a[0],a[1]||null]; n++;
+      const m=CDATA[tk];
+      if(m&&typeof m.d1!=="number"){ m.d1=a[0]; if(a[1]) m.d1d=a[1]; }
     });
     return n;
   }catch(e){ return 0; }
@@ -2536,12 +2602,15 @@ function d1Label(cut){
 /* 実際に騰落率の計算に使った日付＝各項目の d1d の最頻値。これをタブ名にする。
    （取得元ごとに最新日が違うため、固定日ではなく“使った日”を表示する） */
 function d1ActualDate(){
-  const c={};
+  const c={}, ref=d1RefDate();
   ALL.forEach(function(tk){
-    const m=CDATA[tk];
-    if(!m||typeof m.d1!=="number"||!m.d1d) return;
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(m.d1d)) return;
-    c[m.d1d]=(c[m.d1d]||0)+1;
+    const m=CDATA[tk], st=D1STORE[tk];
+    const dv=(m&&typeof m.d1==="number")? m.d1 : (st? st[0] : undefined);
+    const dd=(m&&m.d1d)|| (st&&st[1]);
+    if(typeof dv!=="number"||!dd) return;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dd)) return;
+    if(ref && dd>ref) return;                          /* 未確定（当日・未来）は数えない */
+    c[dd]=(c[dd]||0)+1;
   });
   let best=null,bn=0;
   Object.keys(c).forEach(function(k){
@@ -2549,13 +2618,45 @@ function d1ActualDate(){
   });
   return best;
 }
+/* 「最新1日」タブの基準日を決める。
+   タブ名は“終わった取引日”でなければならない。米国市場は 16:00 ET に引けるので、
+   NY時間で 16:00 前なら当日はまだ未確定（＝前日の引けが最新）。アジア市場は
+   日本時間の昼に動いているが、それを混ぜると「本日」のタブ名になり中身は前日終値で
+   埋まる（実測：2026-11-10 13:05 JST 時点でタブ名だけ 11月10日になっていた）。
+   そこで NY の日付と時刻を基準に「確定済みの最新日」を求め、それより後の日付は
+   集計から除く（当日分の行は行バッジで日付を明示する）。 */
+function d1RefDate(){
+  try{
+    const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false})
+      .formatToParts(new Date()).reduce(function(a,x){ a[x.type]=x.value; return a; },{});
+    const today=p.year+"-"+p.month+"-"+p.day;
+    const mins=(parseInt(p.hour,10)%24)*60+parseInt(p.minute,10);
+    if(mins>=16*60) return today;                     /* 米国は引け済み */
+    const d=new Date(today+"T00:00:00Z"); d.setUTCDate(d.getUTCDate()-1);
+    return d.toISOString().slice(0,10);                /* 前日の引けが最新の確定値 */
+  }catch(e){ return null; }
+}
 function d1Ymd(v){ return (v&&/^\d{4}-\d{2}-\d{2}$/.test(v))? v : null; }
+const USIDX=["^GSPC","^SP400","^SP600","^DJI","^NDX","^RUI","^RUT","^RUA"];
+function d1UsDate(){
+  const ref=d1RefDate(); let best=null;
+  USIDX.forEach(function(tk){
+    const m=CDATA[tk]; if(!m) return;
+    const d=d1Ymd(m.d1d)||d1Ymd(m.asof);
+    if(!d) return;
+    if(ref && d>ref) return;
+    if(!best||d>best) best=d;
+  });
+  return best;
+}
 function d1Name(){
+  try{ const u=d1UsDate(); if(u) return d1Label(u); }catch(e){}
   try{ const a=d1Ymd(d1ActualDate()); if(a) return d1Label(a); }catch(e){}
   try{
     const c={};
+    const ref2=d1RefDate();
     ALL.forEach(function(tk){ const m=CDATA[tk]; const a=d1Ymd(m&&m.d1d)||d1Ymd(m&&m.asof);
-      if(a) c[a]=(c[a]||0)+1; });
+      if(a && (!ref2 || a<=ref2)) c[a]=(c[a]||0)+1; });
     let best=null,bn=0;
     Object.keys(c).forEach(function(k){ if(c[k]>bn||(c[k]===bn&&(!best||k>best))){ best=k; bn=c[k]; } });
     if(best) return d1Label(best);
@@ -2585,8 +2686,9 @@ function d1SetLabel(cut){
 }
 function d1Put(tk,d1,d1d){
   if(typeof d1!=="number"||!isFinite(d1)) return false;
-  const cd=CDATA[tk]; if(!cd) return false;
-  cd.d1=d1; cd.d1d=d1d; try{ if(d1d) localStorage.setItem("ytd_d1last",d1d); }catch(e){}
+  D1STORE[tk]=[d1,d1d||null];
+  const cd=CDATA[tk]; if(cd){ cd.d1=d1; if(d1d) cd.d1d=d1d; }
+  try{ if(d1d) localStorage.setItem("ytd_d1last",d1d); }catch(e){}
   return true;
 }
 function d1FromRows(rows,cut){
@@ -2600,7 +2702,13 @@ function d1FromRows(rows,cut){
 async function d1PassSpark(cut){
   /* 12銘柄ずつ（20だとYahoo側が一部を落とすことがある）。失敗時は別ホスト→プロキシへ。
      パースできた銘柄が1件でもあればその塊は成功とみなし、残りはchart側で拾う */
-  const targets=ALL.filter(function(tk){ return !D1SKIP[tk] && RATEKEYS.indexOf(tk)<0 && (!CDATA[tk] || typeof CDATA[tk].d1!=="number" || (cut&&CDATA[tk].d1d!==cut)); });
+  const targets=ALL.filter(function(tk){
+    if(D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0) return false;
+    const m=CDATA[tk], st=D1STORE[tk];
+    if(m&&typeof m.d1==="number"&&(!cut||m.d1d===cut)) return false;
+    if(st&&typeof st[0]==="number"&&(!cut||st[1]===cut)) return false;   /* 保存済みは取りに行かない */
+    return true;
+  });
   if(!targets.length) return 0;
   /* ここが「最新1日タブが遅い」最大の原因だった。
      以前は12銘柄ずつ“完全に逐次”で、1塊ごとに最大3経路×7秒待っていたため、
@@ -2608,8 +2716,11 @@ async function d1PassSpark(cut){
      ・塊を並列3本で流す（同時4以上はYahoo側の429を招く）
      ・直接取得のタイムアウトを 7秒→3.2秒 に短縮
      ・全体の予算(D1_SPARK_MS)を使い切ったら打ち切り、残りはchart側へ回す */
-  const BUDGET=Date.now()+9000;
-  const chunks=[]; for(let i=0;i<targets.length;i+=12) chunks.push(targets.slice(i,i+12));
+  const BUDGET=Date.now()+7000;
+  /* 再描画は間引く（チャンクごとに全体を組み直すと、8回×全行再構築で数百ms×8の無駄） */
+  let lastR=0;
+  const rSoon=function(){ const t=Date.now(); if(t-lastR<800) return; lastR=t; try{ render(false); }catch(e){} };
+  const chunks=[]; for(let i=0;i<targets.length;i+=25) chunks.push(targets.slice(i,i+25));   /* 12→25：リクエスト数半減 */
   let n=0, ci=0;
   async function worker(){
     while(ci<chunks.length){
@@ -2643,7 +2754,7 @@ async function d1PassSpark(cut){
         }catch(e){}
         if(got) break;
       }
-      try{ render(false); }catch(e){}
+      rSoon();
     }
   }
   await Promise.all([worker(),worker(),worker()]);
