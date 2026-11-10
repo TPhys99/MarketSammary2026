@@ -1049,7 +1049,7 @@ function monthMap(ts,px,endTs,tz){
   if(last===null) return null;
   const t=endTs&&isFinite(endTs)? endTs : lastT;
   const d=new Date(t*1000);
-  return {map:out,last:last,asof:tsYmd(t,tz||"UTC"),
+  return {map:out,last:last,asof:tsYmd(t,tz||"UTC"),barD:tsYmd(lastT,tz||"UTC"),
           time:d.toISOString().slice(11,16)+"Z"};
 }
 /* ===== 当月バーの遅延補正 =====
@@ -1061,6 +1061,7 @@ function liveFix(m,res){
   if(!m||typeof p!=="number"||!isFinite(p)||p<=0) return m;
   const t=meta.regularMarketTime;
   const d=t? new Date(t*1000) : new Date();
+  const prevLast=m.last;                     /* 最終バーの終値（上書き前） */
   const tz=meta.exchangeTimezoneName;
   let k;
   try{
@@ -1074,7 +1075,24 @@ function liveFix(m,res){
   /* ここは市場のタイムスタンプ。現地00:00のバーを渡されることがあるため、
      「8時未満は前営業日」という東財クォート用の補正(emYmd)を使ってはいけない
      （東京・ムンバイで必ず1日前にずれる）。純粋なTZ変換の tsYmd を使う。 */
-  if(t){ const a=tsYmd(t,tz); if(a){ m.asof=a; m.d1d=a; } }
+  if(t){
+    const a=tsYmd(t,tz);
+    if(a){
+      m.asof=a;
+      const barD=m.barD||null;
+      /* バーが最新日まで揃っていれば騰落率も最新。揃っていないのに日付だけ
+         進めると「11/10の値に11/9の騰落率」という不整合になる（実測：日経・上海・ハンセン）。
+         → 価格が最終バーより新しい日付なら、その価格と最終バー終値から作り直す。 */
+      if(barD&&a!==barD&&typeof prevLast==="number"&&prevLast>0){
+        const r0=p/prevLast;
+        if(r0>0.4&&r0<2.5){
+          m.lastBar=prevLast; m.lastBarD=barD;
+          m.d1=+((r0-1)*100).toFixed(2);
+        }
+      }
+      m.d1d=a;
+    }
+  }
   /* 場中(REGULAR)なら未確定。バッジに「11/10場中」と出すための印 */
   if(meta.marketState) m.mstate=meta.marketState;
   return m;
@@ -1910,11 +1928,14 @@ const EMTZ={"US2Y":"America/New_York","US10Y":"America/New_York","JP2Y":"Asia/To
    取引所の現地時刻とセッション時間から判定する。 */
 const TK_TZ={"^GSPC":"America/New_York","^DJI":"America/New_York","^NDX":"America/New_York",
  "^RUT":"America/New_York","^RUA":"America/New_York","^SP400":"America/New_York","^SP600":"America/New_York",
+ "EU2Y":"Europe/Berlin","EU10Y":"Europe/Berlin",
  "^N225":"Asia/Tokyo","^HSI":"Asia/Hong_Kong","^BSESN":"Asia/Kolkata","^GDAXI":"Europe/Berlin",
  "^FTSE":"Europe/London","^FCHI":"Europe/Paris","^IBEX":"Europe/Madrid","^GSPTSE":"America/Toronto",
  "^AXJO":"Australia/Sydney","^BVSP":"America/Sao_Paulo","^MXX":"America/Mexico_City",
  "000001.SS":"Asia/Shanghai","FTSEMIB.MI":"Europe/Rome"};
 function tzOf(tk){
+  /* 実質金利は名目と同じ取引所の日付に従う（米国固定になっていた） */
+  if(/RR$/.test(tk)){ const rm=REALMAP[tk]; if(rm&&rm[0]) return tzOf(rm[0]); }
   if(EMTZ[tk]) return EMTZ[tk];
   if(TK_TZ[tk]) return TK_TZ[tk];
   const s=String(tk);
@@ -3112,6 +3133,13 @@ function d1SetLabel(cut){
 let D1_LASTD=null;
 function d1Put(tk,d1,d1d){
   if(typeof d1!=="number"||!isFinite(d1)) return false;
+  const cm=CDATA[tk];
+  /* 日足の最終バーが市場の最新営業日に追いついていない場合（実測：日経・上海・ハンセン）、
+     価格だけ新しく騰落率だけ前日、という不整合になる。価格が新しければ%を価格から作り直す。 */
+  if(cm&&cm.lastBarD&&cm.asof&&d1d&&cm.asof>d1d&&cm.lastBar>0&&cm.last>0){
+    const r1=cm.last/cm.lastBar;
+    if(r1>0.4&&r1<2.5){ d1=+((r1-1)*100).toFixed(2); d1d=cm.asof; }
+  }
   D1STORE[tk]=[d1,d1d||null];
   const cd=CDATA[tk]; if(cd){ cd.d1=d1; if(d1d) cd.d1d=d1d; }
   if(d1d&&d1d!==D1_LASTD){ D1_LASTD=d1d; try{ localStorage.setItem("ytd_d1last",d1d); }catch(e){} }
