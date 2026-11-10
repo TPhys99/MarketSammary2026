@@ -704,8 +704,13 @@ function d1Badge(tk){
        p.date（金利CSVの日付で上書きされる）と比べると、タブ名と一致している行にも
        バッジが出てしまう（実測：タブ11/10・全行11/10で全行にバッジ）。 */
     const base=d1Date()||p.date;
+    const m2=CDATA[tk];
+    const live=!!(m2&&m2.mstate==="REGULAR");
+    const mmdd=parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10);
+    /* 場中の行は「11/10場中」と明示（確定値と混同しないように）。
+       場中でなければ従来どおり、タブ名と違う日付のときだけ出す */
+    if(live) return "<i class=\"d1dt live\" title=\"この行は場中の値（未確定）："+d+"\">"+mmdd+"場中</i>";
     if(!base||d===base) return "";
-    return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10)+"</i>";
   }catch(e){ return ""; }
 }
 function rowHtml(it,V,mx,hasData){
@@ -983,6 +988,8 @@ function liveFix(m,res){
   }catch(e){ k=d.toISOString().slice(0,7); }
   m.map[k]=p; m.last=p;
   if(t) m.asof=new Date(t*1000).toISOString().slice(0,10);
+  /* 場中(REGULAR)なら未確定。バッジに「11/10場中」と出すための印 */
+  if(meta.marketState) m.mstate=meta.marketState;
   return m;
 }
 async function fetchChunk(syms,order){
@@ -2826,9 +2833,23 @@ function d1Date(){
   });
   return best;
 }
+function d1Live(){
+  /* 米国市場が場中か（^GSPC の marketState、無ければNY時間で判定） */
+  const g=CDATA["^GSPC"];
+  if(g&&g.mstate) return g.mstate==="REGULAR";
+  try{
+    const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false})
+      .formatToParts(new Date()).reduce(function(a,x){ a[x.type]=x.value; return a; },{});
+    if(["Sat","Sun"].indexOf(p.weekday)>=0) return false;
+    const mins=(parseInt(p.hour,10)%24)*60+parseInt(p.minute,10);
+    return mins>=570 && mins<960;                 /* 9:30-16:00 ET */
+  }catch(e){ return false; }
+}
 function d1Name(){
-  const a=d1Date(); if(a) return d1Label(a);
-  try{ const b=d1Ymd(d1ActualDate()); if(b) return d1Label(b); }catch(e){}
+  const a=d1Date();
+  if(a) return d1Label(a)+(d1Live()? "場中":"");
+  if(false) return "";
+  try{ const b=d1Ymd(d1ActualDate()); if(b) return d1Label(b)+(d1Live()? "場中":""); }catch(e){}
   try{ const c=d1Ymd(d1Cut()); if(c) return d1Label(c); }catch(e){}
   try{ const v=d1Ymd(localStorage.getItem("ytd_d1last")); if(v) return d1Label(v); }catch(e){}
   try{ const s2=d1Ymd(typeof ASOF!=="undefined"?ASOF:null); if(s2) return d1Label(s2); }catch(e){}

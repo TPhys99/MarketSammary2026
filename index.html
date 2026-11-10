@@ -246,7 +246,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0425</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0426</span>
 </footer>
 
 <script>
@@ -713,8 +713,13 @@ function d1Badge(tk){
        p.date は金利CSVの日付で上書きされることがあり、タブ名と一致する行にも
        バッジが出てしまう（実測：タブ11/10・全行11/10で全行にバッジ）。 */
     const base=d1Date()||p.date;
+    const m2=CDATA[tk];
+    const live=!!(m2&&m2.mstate==="REGULAR");
+    const mmdd=parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10);
+    /* 場中の行は「11/10場中」と明示（確定値と混同しないように）。
+       場中でなければ従来どおり、タブ名と違う日付のときだけ出す */
+    if(live) return "<i class=\"d1dt live\" title=\"この行は場中の値（未確定）："+d+"\">"+mmdd+"場中</i>";
     if(!base||d===base) return "";
-    return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10)+"</i>";
   }catch(e){ return ""; }
 }
 function rowHtml(it,V,mx,hasData){
@@ -982,6 +987,8 @@ function liveFix(m,res){
   }catch(e){ k=d.toISOString().slice(0,7); }
   m.map[k]=p; m.last=p;
   if(t) m.asof=new Date(t*1000).toISOString().slice(0,10);
+  /* 場中(REGULAR)なら未確定。バッジに「11/10場中」と出すための印 */
+  if(meta.marketState) m.mstate=meta.marketState;
   return m;
 }
 async function fetchChunk(syms,order){
@@ -2907,9 +2914,23 @@ function d1Date(){
   });
   return best;
 }
+function d1Live(){
+  /* 米国市場が場中か（^GSPC の marketState、無ければNY時間で判定） */
+  const g=CDATA["^GSPC"];
+  if(g&&g.mstate) return g.mstate==="REGULAR";
+  try{
+    const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false})
+      .formatToParts(new Date()).reduce(function(a,x){ a[x.type]=x.value; return a; },{});
+    if(["Sat","Sun"].indexOf(p.weekday)>=0) return false;
+    const mins=(parseInt(p.hour,10)%24)*60+parseInt(p.minute,10);
+    return mins>=570 && mins<960;                 /* 9:30-16:00 ET */
+  }catch(e){ return false; }
+}
 function d1Name(){
-  const a=d1Date(); if(a) return d1Label(a);
-  try{ const b=d1Ymd(d1ActualDate()); if(b) return d1Label(b); }catch(e){}
+  const a=d1Date();
+  if(a) return d1Label(a)+(d1Live()? "場中":"");
+  if(false) return "";
+  try{ const b=d1Ymd(d1ActualDate()); if(b) return d1Label(b)+(d1Live()? "場中":""); }catch(e){}
   try{ const c=d1Ymd(d1Cut()); if(c) return d1Label(c); }catch(e){}
   try{ const v=d1Ymd(localStorage.getItem("ytd_d1last")); if(v) return d1Label(v); }catch(e){}
   try{ const s=d1Ymd(typeof ASOF!=="undefined"?ASOF:null); if(s) return d1Label(s); }catch(e){}
