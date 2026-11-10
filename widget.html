@@ -220,7 +220,7 @@ body{
 .chft{margin-top:8px;font-size:9.5px;color:var(--tx2);line-height:1.5;min-height:14px}
 .chft b{color:var(--tx);font-weight:700}
 
-.d1dt{display:inline-block;margin-left:3px;font-size:8.5px;font-weight:700;font-style:normal;color:var(--tx2);border-radius:3px;padding:0 3px;line-height:1.35;vertical-align:middle;background:rgba(128,128,128,.16)}
+.d1dt{display:inline-block;flex:0 0 auto;white-space:nowrap;margin-left:3px;font-size:8.5px;font-weight:700;font-style:normal;color:var(--tx2);border-radius:3px;padding:0 3px;line-height:1.35;vertical-align:middle;background:rgba(128,128,128,.16)}
 .subh{display:flex;align-items:center;gap:6px;margin:7px 0 2px;padding:2px 2px 0}
 .subh span{font-size:10px;font-weight:800;letter-spacing:.03em;color:var(--tx2);
   border-left:2px solid var(--accent,var(--tx));padding-left:6px;line-height:1.4}
@@ -699,7 +699,12 @@ function d1Badge(tk){
   try{
     const p=PERIODS[CUR]; if(!p||!p.d1) return "";
     const d=d1RowDate(tk);
-    if(!d||!p.date||d===p.date) return "";
+    if(!d) return "";
+    /* 比較対象は「タブ名に表示している日付」＝GSPCの最新データ日。
+       p.date（金利CSVの日付で上書きされる）と比べると、タブ名と一致している行にも
+       バッジが出てしまう（実測：タブ11/10・全行11/10で全行にバッジ）。 */
+    const base=d1Date()||p.date;
+    if(!base||d===base) return "";
     return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10)+"</i>";
   }catch(e){ return ""; }
 }
@@ -2832,18 +2837,23 @@ function d1Name(){
 let D1_NAME_SHOWN="";
 function d1Sync(){
   const nm=d1Name();
-  if(nm===D1_NAME_SHOWN) return nm;
-  D1_NAME_SHOWN=nm;
-  try{ const lastP=PERIODS[PERIODS.length-1]; if(lastP&&lastP.d1){ lastP.label=nm;
-    const dd=d1Date(); if(dd) lastP.date=dd; } }catch(e){}
+  const dd=d1Date();
+  /* 早期returnすると「一度別の日付で描かれたラベル」が直らない。
+     ラベル・p.date・DOM文字を毎回そろえる（比較は文字列だけなので軽い） */
+  try{ const lp=PERIODS[PERIODS.length-1]; if(lp&&lp.d1){ lp.label=nm; if(dd) lp.date=dd; } }catch(e){}
   try{ const a=document.querySelector('#pnav a[data-d1]'); if(a&&a.textContent!==nm) a.textContent=nm; }catch(e){}
   try{ const b=document.querySelector('#tabs button[data-d1]'); if(b&&b.textContent!==nm) b.textContent=nm; }catch(e){}
+  D1_NAME_SHOWN=nm;
   return nm;
 }
 function d1SetLabel(cut){
   const lastP=PERIODS[PERIODS.length-1];
-  if(!lastP||!lastP.d1||!cut||lastP.date===cut) return false;
-  lastP.label=d1Label(cut); lastP.date=cut;
+  if(!lastP||!lastP.d1) return false;
+  /* タブ名は「GSPCの最新データ日」だけ。金利CSVの日付(cut)で上書きしない
+     （上書きするとタブ名と行バッジの基準がずれ、全行にバッジが出ていた）。 */
+  const dd=d1Date()||cut;
+  if(!dd) return false;
+  lastP.label=d1Label(dd); lastP.date=dd;
   try{ renderNav(); }catch(e){}
   try{ if(typeof wTabs==="function") wTabs(); }catch(e){}
   return true;
