@@ -246,7 +246,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0428</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0429</span>
 </footer>
 
 <script>
@@ -712,14 +712,14 @@ function d1Badge(tk){
     /* 比較対象は「タブ名に表示している日付」＝GSPCの最新データ日。
        p.date は金利CSVの日付で上書きされることがあり、タブ名と一致する行にも
        バッジが出てしまう（実測：タブ11/10・全行11/10で全行にバッジ）。 */
-    const base=d1Date()||p.date;
+    const base=d1Date();
     const m2=CDATA[tk];
     const live=!!(m2&&m2.mstate==="REGULAR");
     const mmdd=parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10);
     /* 場中の行は「11/10場中」と明示（確定値と混同しないように）。
        場中でなければ従来どおり、タブ名と違う日付のときだけ出す */
     if(live) return "<i class=\"d1dt live\" title=\"この行は場中の値（未確定）："+d+"\">"+mmdd+"場中</i>";
-    if(!base||d===base) return "";
+    if(base&&d===base) return "";
     return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+mmdd+"</i>";
   }catch(e){ return ""; }
 }
@@ -837,6 +837,7 @@ function setStatus(cls,html,prog){
   if(prog!=null) document.querySelector("#pbar i").style.width=Math.round(prog*100)+"%";
 }
 setInterval(function(){
+  if(document.hidden){ try{ d1Sync(); }catch(e){} return; }
   let anyUndef=false;
   for(let i=0;i<ALL.length;i++){ if(!CDATA[ALL[i]] && (!pastDL()||PENDING[ALL[i]])){ anyUndef=true; break; } }
   try{ d1Sync(); }catch(e){}
@@ -987,7 +988,7 @@ function liveFix(m,res){
     k=k.y+"-"+k.m;
   }catch(e){ k=d.toISOString().slice(0,7); }
   m.map[k]=p; m.last=p;
-  if(t) m.asof=new Date(t*1000).toISOString().slice(0,10);
+  if(t){ const a=emYmd(t,tz); if(a) m.asof=a; }
   /* 場中(REGULAR)なら未確定。バッジに「11/10場中」と出すための印 */
   if(meta.marketState) m.mstate=meta.marketState;
   return m;
@@ -1164,8 +1165,8 @@ function loadSnap(){
       /* 金利はスナップショットから復元しない。古い水準が残ると表示が実勢から乖離する
          （実測：BR10Y が 15.88% のまま、一次情報の10月末 15.51% と 0.37pt ずれた）。
          金利は専用キャッシュ（10分TTL）＋当日取得のみを使う。 */
-      if(RATEKEYS.indexOf(tk)>=0) return;
-      if(o&&o.map){ CDATA[tk]=o; n++; if(o.asof&&o.asof>ASOF) ASOF=o.asof; }
+      if(isRate(tk)) return;
+      if(o&&o.map){ delete o.mstate; CDATA[tk]=o; n++; if(o.asof&&o.asof>ASOF) ASOF=o.asof; }
     });
     SNAP_TS=j.ts;
     return n;
@@ -1830,7 +1831,9 @@ function emApply(arr,ref){
   let n=0;
   (arr||[]).forEach(function(d){
     if(!d||!d.f12) return;
-    const tk=String(d.f12), m=CDATA[tk]; if(!m) return;
+    const tk=String(d.f12);
+    let m=CDATA[tk];
+    if(!m){ m={map:{},last:null,asof:"",rate:true,rt:true}; CDATA[tk]=m; }
     const px=parseFloat(d.f2), ch=parseFloat(d.f3), pv=parseFloat(d.f18);
     if(isFinite(px)&&px>0) m.last=px;
     if(!isFinite(ch)) return;
@@ -1840,7 +1843,7 @@ function emApply(arr,ref){
     /* 日付は「東財の更新時刻(f124)」から現地時間で作る。以前はタブ名の日付を
        そのまま入れており、実際は11/6の公表値でも11/10として扱われていた。 */
     const dd=emYmd(parseFloat(d.f124),EMTZ[tk]);
-    if(dd) m.d1d=dd; else if(ref) m.d1d=ref;
+    if(dd) m.d1d=dd; else delete m.d1d;
     /* 更新時刻が直近30分以内なら「場中（未確定）」とみなす。
        東財のクォートは取引時間中に動くため、確定値と同じ表示にすると誤解を生む。
        市場が閉じていれば f124 が古いままなので自動的に日付のみに戻る。 */
@@ -1854,6 +1857,8 @@ async function fetchEmRateQuote(){
   const codes=RATEKEYS.filter(function(tk){ return !!EMCODES[tk]; });
   if(!codes.length) return 0;
   const ref=d1Date()||null;
+  /* 前回の「場中」判定は毎回破棄（取得失敗時にREGULARが残留するのを防ぐ） */
+  codes.forEach(function(tk){ const mm=CDATA[tk]; if(mm) delete mm.mstate; });
   const mk=function(host,list){
     return "https://"+host+".eastmoney.com/api/qt/ulist.np/get?secids="
       +list.map(function(tk){ return "171."+EMCODES[tk]; }).join(",")
@@ -2864,12 +2869,17 @@ function d1Save(){
 function d1Load(){
   try{
     const j=JSON.parse(localStorage.getItem(D1_KEY)||"null"); if(!j||!j.d) return 0;
+    /* 4日を超えたキャッシュは捨てる（日次騰落率は毎営業日変わる） */
+    if(!j.ts||Date.now()-j.ts>4*864e5){ try{ localStorage.removeItem(D1_KEY); }catch(e){} return 0; }
+    const lim=d1RefDate();
     let n=0;
     Object.keys(j.d).forEach(function(tk){
       const a=j.d[tk]||[]; if(typeof a[0]!=="number") return;
-      D1STORE[tk]=[a[0],a[1]||null]; n++;
+      const d=d1Ymd(a[1]); if(!d) return;
+      if(lim&&d>lim) return;                       /* 未来日は捨てる */
+      D1STORE[tk]=[a[0],d]; n++;
       const m=CDATA[tk];
-      if(m&&typeof m.d1!=="number"){ m.d1=a[0]; if(a[1]) m.d1d=a[1]; }
+      if(m&&typeof m.d1!=="number"){ m.d1=a[0]; m.d1d=d; }
     });
     return n;
   }catch(e){ return 0; }
@@ -3004,12 +3014,24 @@ function d1SetLabel(cut){
   try{ if(typeof wTabs==="function") wTabs(); }catch(e){}
   return true;
 }
+let D1_LASTD=null;
 function d1Put(tk,d1,d1d){
   if(typeof d1!=="number"||!isFinite(d1)) return false;
   D1STORE[tk]=[d1,d1d||null];
   const cd=CDATA[tk]; if(cd){ cd.d1=d1; if(d1d) cd.d1d=d1d; }
-  try{ if(d1d) localStorage.setItem("ytd_d1last",d1d); }catch(e){}
+  if(d1d&&d1d!==D1_LASTD){ D1_LASTD=d1d; try{ localStorage.setItem("ytd_d1last",d1d); }catch(e){} }
   return true;
+}
+let D1_LASTD_DUMMY=0;
+/* その銘柄について「取りに行く必要があるか」。価格系は実データ基準日で判定する。
+   以前は金利CSVの日付(cut)と比較していたため、価格系は永久に不一致＝毎回全件再取得になった。 */
+function d1Need(tk,cut){
+  if(D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0) return false;
+  const m=CDATA[tk];
+  if(!m||typeof m.d1!=="number") return true;
+  const lim=d1RefDate();
+  if(m.d1d&&lim&&m.d1d<lim) return true;          /* 前営業日以前の値なら更新対象 */
+  return false;
 }
 function d1FromRows(rows,cut){
   /* 基準日で切り揃えない。タブ名はGSPCの日付、行は「その行の実際の日付」を
@@ -3024,13 +3046,7 @@ function d1FromRows(rows,cut){
 async function d1PassSpark(cut){
   /* 12銘柄ずつ（20だとYahoo側が一部を落とすことがある）。失敗時は別ホスト→プロキシへ。
      パースできた銘柄が1件でもあればその塊は成功とみなし、残りはchart側で拾う */
-  const targets=ALL.filter(function(tk){
-    if(D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0) return false;
-    const m=CDATA[tk], st=D1STORE[tk];
-    if(m&&typeof m.d1==="number"&&(!cut||m.d1d===cut)) return false;
-    if(st&&typeof st[0]==="number"&&(!cut||st[1]===cut)) return false;   /* 保存済みは取りに行かない */
-    return true;
-  });
+  const targets=ALL.filter(function(tk){ return d1Need(tk,cut); });
   if(!targets.length) return 0;
   /* ここが「最新1日タブが遅い」最大の原因だった。
      以前は12銘柄ずつ“完全に逐次”で、1塊ごとに最大3経路×7秒待っていたため、
@@ -3042,7 +3058,7 @@ async function d1PassSpark(cut){
   /* 再描画は間引く（チャンクごとに全体を組み直すと、8回×全行再構築で数百ms×8の無駄） */
   let lastR=0;
   const rSoon=function(){ const t=Date.now(); if(t-lastR<800) return; lastR=t; try{ render(false); }catch(e){} };
-  const chunks=[]; for(let i=0;i<targets.length;i+=25) chunks.push(targets.slice(i,i+25));   /* 12→25：リクエスト数半減 */
+  const chunks=[]; for(let i=0;i<targets.length;i+=20) chunks.push(targets.slice(i,i+20));   /* 12→25：リクエスト数半減 */
   let n=0, ci=0;
   async function worker(){
     while(ci<chunks.length){
@@ -3130,21 +3146,25 @@ async function fillD1(force){
       const m=CDATA[tk]; if(!m) return;
       if(typeof m.d1==="number"){ if(m.asof) m.d1d=m.asof; }
     });
-    /* 金利は東財の一括クォートで先に確定させる（1リクエスト・13銘柄） */
-    try{ await fetchEmRateQuote(); }catch(e){}
-    await d1PassSpark(cut);
-    let rest=ALL.filter(function(tk){ return !D1SKIP[tk] && RATEKEYS.indexOf(tk)<0 && (!CDATA[tk] || typeof CDATA[tk].d1!=="number" || (cut&&CDATA[tk].d1d!==cut)); });
+    /* 金利（東財・別ホスト）と spark（Yahoo）は独立。直列に待つと金利の
+       フォールバック数秒がそのまま加算されるため並列に流す。キー空間も排他。 */
+    await Promise.all([
+      (async function(){ try{ await fetchEmRateQuote(); }catch(e){} })(),
+      d1PassSpark(cut)
+    ]);
+    let rest=ALL.filter(function(tk){ return d1Need(tk,cut); });
     /* chart側にも上限を設ける（プロキシ頼みで数十秒待つのを防ぐ） */
     D1_CHART_BUDGET=Date.now()+7000;
     if(rest.length) await d1PassChart(cut,rest);
-    rest=ALL.filter(function(tk){ return !D1SKIP[tk] && RATEKEYS.indexOf(tk)<0 && (typeof CDATA[tk].d1!=="number" || (cut&&CDATA[tk].d1d!==cut)); });
+    rest=ALL.filter(function(tk){ return d1Need(tk,cut); });
     /* 例外扱いの項目は最初から対象外。残りが無ければ「取得完了」として確定させる
        （ここを緩めると未取得が永久に「取得中」のままになり、数値が出ない） */
     D1_DONE=(rest.length===0);
     const act=d1ActualDate();
     if(act) d1SetLabel(act);
   }catch(e){ D1_DONE=false; }
-  D1_FIN=true;                       /* ここから先は未取得を「取得できません」で確定 */
+  D1_FIN=ALL.every(function(tk){ var m=CDATA[tk]; return D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0||(m&&typeof m.d1==="number"); });
+  /* ここから先は未取得を「取得できません」で確定 */
   D1_RUNNING=false;
   try{ d1Save(); }catch(e){}
   try{ render(); }catch(e){}
