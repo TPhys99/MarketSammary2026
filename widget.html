@@ -3061,6 +3061,9 @@ function d1RefDate(){
 }
 function d1Ymd(v){ return (v&&/^\d{4}-\d{2}-\d{2}$/.test(v))? v : null; }
 const USIDX=["^GSPC","^SP400","^SP600","^DJI","^NDX","^RUI","^RUT","^RUA"];
+/* 最新1日タブの「基準銘柄」。この銘柄の最新データ日がタブ名になり、
+   この銘柄が場中ならタブ名に「場中」が付く。日本中心の利用に合わせて日経225。 */
+const D1BASE="^N225";
 function d1UsDate(){
   const ref=d1RefDate(); let best=null;
   USIDX.forEach(function(tk){
@@ -3073,6 +3076,11 @@ function d1UsDate(){
   return best;
 }
 function d1Date(){
+  /* タブ名＝「開いた時点での基準銘柄（D1BASE＝日経225）の最新データ日」。
+     基準が取れないときだけ米国指数→S&P500の順に落とす。 */
+  const b=CDATA[D1BASE];
+  const d0=(b&&(d1Ymd(b.d1d)||d1Ymd(b.asof)))||null;
+  if(d0) return d0;
   const g=CDATA["^GSPC"];
   const d=(g&&(d1Ymd(g.d1d)||d1Ymd(g.asof)))||null;
   if(d) return d;
@@ -3085,16 +3093,9 @@ function d1Date(){
   return best;
 }
 function d1Live(){
-  /* 米国市場が場中か（^GSPC の marketState、無ければNY時間で判定） */
-  const g=CDATA["^GSPC"];
-  if(g&&g.mstate) return g.mstate==="REGULAR";
-  try{
-    const p=new Intl.DateTimeFormat("en-CA",{timeZone:"America/New_York",weekday:"short",hour:"2-digit",minute:"2-digit",hour12:false})
-      .formatToParts(new Date()).reduce(function(a,x){ a[x.type]=x.value; return a; },{});
-    if(["Sat","Sun"].indexOf(p.weekday)>=0) return false;
-    const mins=(parseInt(p.hour,10)%24)*60+parseInt(p.minute,10);
-    return mins>=570 && mins<960;                 /* 9:30-16:00 ET */
-  }catch(e){ return false; }
+  /* 基準銘柄（D1BASE）が場中か。marketStateに依存せず取引所時計で判定する。 */
+  try{ if(d1IsLive(D1BASE)) return true; }catch(e){}
+  return false;
 }
 function d1Name(){
   const a=d1Date();
