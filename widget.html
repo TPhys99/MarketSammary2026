@@ -681,19 +681,42 @@ function pageValsInner(){
 /* ================= 描画 ================= */
 /* 最新1日タブで「その行の日付」がタブ名の日付と違う場合に添える小さな日付バッジ。
    例：価格は11/9だが米財務省・ECBの金利は11/6 → 行に「11/6」と出して取り違えを防ぐ */
+/* 日付の内訳を確認するための診断（コンソールで d1diag("^N225") と入力） */
+function d1diag(tk){
+  const m=CDATA[tk]||{};
+  const o={tk:tk, d1:typeof m.d1==="number"?m.d1:null,
+    d1d:m.d1d||null, asof:m.asof||null, barD1:D1STORE[tk]?D1STORE[tk][1]:null,
+    exp:d1Expect(tk), live:d1IsLive(tk), tz:tzOf(tk),
+    shown:d1RowDate(tk), base:d1Date(), mstate:m.mstate||null};
+  try{ console.log(JSON.stringify(o)); }catch(e){}
+  return o;
+}
+try{ window.d1diag=d1diag; }catch(e){}
+function fixDay(d,tk){
+  if(!d) return null;
+  let t=new Date(d+"T00:00:00Z");
+  if(isNaN(t.getTime())) return null;
+  while(t.getUTCDay()===0||t.getUTCDay()===6) t.setUTCDate(t.getUTCDate()-1);   /* 週末は営業日へ */
+  let out=t.getUTCFullYear()+"-"+pad2(t.getUTCMonth()+1)+"-"+pad2(t.getUTCDate());
+  const exp=d1Expect(tk);
+  if(exp&&out>exp){ out=exp; }                     /* 未来日は最新営業日に丸める */
+  return out;
+}
 function d1RowDate(tk){
   const m=CDATA[tk];
   if(m){
     if(/RR$/.test(tk)){
       const rm=REALMAP[tk], nom=rm&&CDATA[rm[0]];
       const d=(nom&&(d1Ymd(nom.d1d)||d1Ymd(nom.asof)))||null;
-      if(d) return d;
+      if(d) return fixDay(d,tk);
     }
-    const d=d1Ymd(m.d1d)||d1Ymd(m.asof);
-    if(d) return d;
+    /* d1d と asof の新しい方を採る（値と日付の取り違え防止） */
+    const a=d1Ymd(m.d1d), b=d1Ymd(m.asof);
+    const d=(a&&b)?(a>b?a:b):(a||b);
+    if(d) return fixDay(d,tk);
   }
   const st=D1STORE[tk];
-  return st? (d1Ymd(st[1])||null) : null;
+  return st? fixDay(d1Ymd(st[1]),tk) : null;
 }
 function d1Badge(tk){
   try{
@@ -708,9 +731,9 @@ function d1Badge(tk){
     const mmdd=parseInt(d.slice(5,7),10)+"/"+parseInt(d.slice(8,10),10);
     /* 場中の行は「11/10場中」と明示（確定値と混同しないように）。
        場中でなければ従来どおり、タブ名と違う日付のときだけ出す */
-    if(live) return "<i class=\"d1dt live\" title=\"この行は場中の値（未確定）："+d+"\">"+mmdd+"場中</i>";
+    if(live) return "<i class=\"d1dt live\" title=\"場中（未確定） データ日:"+d+" 期待:"+(d1Expect(tk)||"?")+"\">"+mmdd+"場中</i>";
     if(base&&d===base) return "";
-    return "<i class=\"d1dt\" title=\"この行のデータ基準日："+d+"\">"+mmdd+"</i>";
+    return "<i class=\"d1dt\" title=\"データ日:"+d+" (d1d:"+(CDATA[tk]&&CDATA[tk].d1d||"-")+" asof:"+(CDATA[tk]&&CDATA[tk].asof||"-")+" 期待:"+(d1Expect(tk)||"?")+")\">"+mmdd+"</i>";
   }catch(e){ return ""; }
 }
 function rowHtml(it,V,mx,hasData){
@@ -988,7 +1011,9 @@ function liveFix(m,res){
     k=k.y+"-"+k.m;
   }catch(e){ k=d.toISOString().slice(0,7); }
   m.map[k]=p; m.last=p;
-  if(t){ const a=emYmd(t,tz); if(a) m.asof=a; }
+  /* 値（regularMarketPrice）を採用したら、その値の日付も同じ時刻から決める。
+     日付だけ最終バーのまま残ると「11/10の値なのに11/9の日付」になる。 */
+  if(t){ const a=emYmd(t,tz); if(a){ m.asof=a; m.d1d=a; } }
   /* 場中(REGULAR)なら未確定。バッジに「11/10場中」と出すための印 */
   if(meta.marketState) m.mstate=meta.marketState;
   return m;
