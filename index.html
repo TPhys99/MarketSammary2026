@@ -246,7 +246,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0439</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0441</span>
 </footer>
 
 <script>
@@ -705,7 +705,7 @@ try{ window.d1diag=d1diag; }catch(e){}
    index.html?diag=1 で開くと、全銘柄の日付の内訳を上部に表示する。
    各行をタップ（クリック）するとその行だけ詳しく出る。 */
 let DIAG_ON=(function(){ try{ return /(\?|&)diag=1/.test(location.search); }catch(e){ return false; } })();
-let DIAG_BOX=null;
+let DIAG_BOX=null, DIAG_HIDE=false;
 function diagText(){
   const lines=[];
   lines.push("build "+ (document.getElementById("build")? document.getElementById("build").textContent : ""));
@@ -726,7 +726,7 @@ function diagMount(){
     b.id="diagbtn"; b.textContent="日付診断";
     b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99998;padding:5px 9px;border-radius:7px;"
       +"border:1px solid #4a90d9;background:#13233d;color:#cfe3ff;font-size:10px;opacity:.85;";
-    b.onclick=function(){ DIAG_ON=!DIAG_ON; if(DIAG_ON){ diagRender(); } else if(DIAG_BOX){ DIAG_BOX.style.display="none"; } };
+    b.onclick=function(){ const hidden=!(DIAG_ON&&!DIAG_HIDE); DIAG_ON=hidden; DIAG_HIDE=!hidden; if(hidden){ diagRender(); } else if(DIAG_BOX){ DIAG_BOX.style.display="none"; } };
     document.body.appendChild(b);
   }catch(e){}
 }
@@ -745,14 +745,14 @@ function diagRender(){
       b1.onclick=function(){ try{ navigator.clipboard.writeText(diagText()); b1.textContent="コピーしました"; setTimeout(function(){ b1.textContent="全コピー"; },1500); }catch(e){ alert(diagText()); } };
       const b2=document.createElement("button"); b2.textContent="閉じる";
       b2.style.cssText=b1.style.cssText;
-      b2.onclick=function(){ DIAG_BOX.style.display="none"; };
+      b2.onclick=function(){ DIAG_HIDE=true; DIAG_BOX.style.display="none"; };
       const t=document.createElement("span"); t.id="diagttl"; t.textContent="日付の内訳";
       bar.appendChild(b1); bar.appendChild(b2); bar.appendChild(t);
       const pre=document.createElement("pre"); pre.id="diagpre"; pre.style.cssText="margin:0;white-space:pre;";
       DIAG_BOX.appendChild(bar); DIAG_BOX.appendChild(pre);
       document.body.appendChild(DIAG_BOX);
     }
-    DIAG_BOX.style.display="block";
+    if(!DIAG_HIDE) DIAG_BOX.style.display="block";
     const pre=document.getElementById("diagpre");
     if(pre) pre.textContent=diagText();
   }catch(e){}
@@ -3159,7 +3159,12 @@ function d1Date(){
   /* タブ名＝「開いた時点での基準銘柄（D1BASE＝日経225）の最新データ日」。
      基準が取れないときだけ米国指数→S&P500の順に落とす。 */
   const b=CDATA[D1BASE];
-  const d0=(b&&(d1Ymd(b.d1d)||d1Ymd(b.asof)))||null;
+  /* d1d（日足のバー日）を優先すると、値が11/10なのにタブ名が11/9になる
+     （実測：日経はバーが11/9のまま・asofは11/10）。バッジと同じく新しい方を採る。 */
+  const d0=b? fixDay((function(){
+      const p=d1Ymd(b.d1d), q=d1Ymd(b.asof);
+      return (p&&q)?(p>q?p:q):(p||q);
+    })(), D1BASE) : null;
   if(d0) return d0;
   const g=CDATA["^GSPC"];
   const d=(g&&(d1Ymd(g.d1d)||d1Ymd(g.asof)))||null;

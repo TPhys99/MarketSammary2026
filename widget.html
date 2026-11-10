@@ -696,7 +696,7 @@ try{ window.d1diag=d1diag; }catch(e){}
    index.html?diag=1 で開くと、全銘柄の日付の内訳を上部に表示する。
    各行をタップ（クリック）するとその行だけ詳しく出る。 */
 let DIAG_ON=(function(){ try{ return /(\?|&)diag=1/.test(location.search); }catch(e){ return false; } })();
-let DIAG_BOX=null;
+let DIAG_BOX=null, DIAG_HIDE=false;
 function diagText(){
   const lines=[];
   lines.push("build "+ (document.getElementById("build")? document.getElementById("build").textContent : ""));
@@ -717,7 +717,7 @@ function diagMount(){
     b.id="diagbtn"; b.textContent="日付診断";
     b.style.cssText="position:fixed;right:8px;bottom:8px;z-index:99998;padding:5px 9px;border-radius:7px;"
       +"border:1px solid #4a90d9;background:#13233d;color:#cfe3ff;font-size:10px;opacity:.85;";
-    b.onclick=function(){ DIAG_ON=!DIAG_ON; if(DIAG_ON){ diagRender(); } else if(DIAG_BOX){ DIAG_BOX.style.display="none"; } };
+    b.onclick=function(){ const hidden=!(DIAG_ON&&!DIAG_HIDE); DIAG_ON=hidden; DIAG_HIDE=!hidden; if(hidden){ diagRender(); } else if(DIAG_BOX){ DIAG_BOX.style.display="none"; } };
     document.body.appendChild(b);
   }catch(e){}
 }
@@ -736,14 +736,14 @@ function diagRender(){
       b1.onclick=function(){ try{ navigator.clipboard.writeText(diagText()); b1.textContent="コピーしました"; setTimeout(function(){ b1.textContent="全コピー"; },1500); }catch(e){ alert(diagText()); } };
       const b2=document.createElement("button"); b2.textContent="閉じる";
       b2.style.cssText=b1.style.cssText;
-      b2.onclick=function(){ DIAG_BOX.style.display="none"; };
+      b2.onclick=function(){ DIAG_HIDE=true; DIAG_BOX.style.display="none"; };
       const t=document.createElement("span"); t.id="diagttl"; t.textContent="日付の内訳";
       bar.appendChild(b1); bar.appendChild(b2); bar.appendChild(t);
       const pre=document.createElement("pre"); pre.id="diagpre"; pre.style.cssText="margin:0;white-space:pre;";
       DIAG_BOX.appendChild(bar); DIAG_BOX.appendChild(pre);
       document.body.appendChild(DIAG_BOX);
     }
-    DIAG_BOX.style.display="block";
+    if(!DIAG_HIDE) DIAG_BOX.style.display="block";
     const pre=document.getElementById("diagpre");
     if(pre) pre.textContent=diagText();
   }catch(e){}
@@ -3079,7 +3079,12 @@ function d1Date(){
   /* タブ名＝「開いた時点での基準銘柄（D1BASE＝日経225）の最新データ日」。
      基準が取れないときだけ米国指数→S&P500の順に落とす。 */
   const b=CDATA[D1BASE];
-  const d0=(b&&(d1Ymd(b.d1d)||d1Ymd(b.asof)))||null;
+  /* d1d（日足のバー日）を優先すると、値が11/10なのにタブ名が11/9になる
+     （実測：日経はバーが11/9のまま・asofは11/10）。バッジと同じく新しい方を採る。 */
+  const d0=b? fixDay((function(){
+      const p=d1Ymd(b.d1d), q=d1Ymd(b.asof);
+      return (p&&q)?(p>q?p:q):(p||q);
+    })(), D1BASE) : null;
   if(d0) return d0;
   const g=CDATA["^GSPC"];
   const d=(g&&(d1Ymd(g.d1d)||d1Ymd(g.asof)))||null;
