@@ -240,6 +240,8 @@ body{
 </div>
 
 <script>
+/* ビルド番号：納品物の版を画面でも確認できるようにする */
+const BUILD="v2026-11-11-1424";
 
 /* ================= 構成（銘柄リストのみ。数値は埋め込まず、開いた時点で取得） ================= */
 /* items: [表示名, ティッカー, 強調(任意 "hl"), 分配金込み(任意 "dv")] */
@@ -3492,7 +3494,7 @@ function wRender(){
      生成結果が前回と同一なら DOM を触らない（内容が変わった時だけ描き直す）。 */
   if(window.__wlast!==h){ window.__wlast=h; _w.className=''; _w.innerHTML=h; }
   const p=PERIODS[CUR];
-  document.getElementById('fst').textContent=p.label+(ASOF? ' ／ 基準 '+ASOF:'');
+  document.getElementById('fst').textContent=p.label+(ASOF? ' ／ 基準 '+ASOF:'')+' ／ '+BUILD;
 }
 let WDEFS=false;
 const WDEFS_HTML=(function(){
