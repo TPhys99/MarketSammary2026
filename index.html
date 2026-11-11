@@ -246,7 +246,7 @@ footer b{color:var(--tx)}
   <b>バーの長さ：</b>各まとまり（セクション）内の最大値で正規化＝<b>同じまとまり内での順位</b>を示します（見出し右の「最大 ±X%」が基準）。セクションをまたいだ強弱は<b>色</b>で判断してください。<br>
   <b>色：</b>±100%を上限とし、小さい変化も見分けられるよう平方根補正した絶対スケール。<b>±100%を超える値は上限と同じ色</b>になり、行に「上限」と表示します。0%は無色（グレー）。<br>
   <b>注意：</b>米国市場の取引時間中は暫定値（現在値）になります。先物型コモディティETF（UNG・DBE・DBB・DBA・DBC）は限月ロールの影響で現物価格と乖離しうる。「中東」は実質イスラエル中心（EIS）。未到来の月は選べません。
-<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0441</span>
+<span id="build" style="display:block;margin-top:6px;opacity:.65">build v2026-11-11-0443</span>
 </footer>
 
 <script>
@@ -665,8 +665,17 @@ function pageValsInner(){
   ALL.forEach(function(tk){
     const m=CDATA[tk];
     /* 通信中は常に「取得中」。期限超過かつ通信が終わっている場合のみ「取得できません」 */
+    /* 実質金利は名目10年−CPIの合成系列。CDATA側が未生成でも、名目から変化を出せる
+       （CPIは期間内で一定なので、実質の変化＝名目の変化）。
+       これを入れないと実質金利だけ「集計中…」のままヒートマップも空になる。 */
+    if(!m && REALKEYS.indexOf(tk)>=0){
+      const rm=REALMAP[tk], nom=rm&&CDATA[rm[0]];
+      if(nom) out[tk]=valForPage(nom,p,rm[0]);
+      else out[tk]=(pastDL()&&!PENDING[tk])? null : undefined;
+      return;
+    }
     if(!m){ out[tk]= (pastDL() && !PENDING[tk] && TRIED[tk])? null : undefined; return; }
-    if(m.rr){
+    if(m.rr||REALKEYS.indexOf(tk)>=0){
       if(p.d1){
         /* 実質金利の日次変化(pt)＝名目10年の日次変化(pt)。
            CPIは年次で一定なので、名目と同じ pt 変化になる。
@@ -681,7 +690,10 @@ function pageValsInner(){
         return D1_FIN? null : undefined;
       }
       const b=m.map? (m.map[(YR-1)+"-12"]!==undefined? m.map[(YR-1)+"-12"] : decGet(tk)) : undefined;
-      out[tk]=(typeof b==="number"&&typeof m.last==="number")? +(m.last-b).toFixed(2) : null; return; }
+      if(typeof b==="number"&&typeof m.last==="number"){ out[tk]=+(m.last-b).toFixed(2); return; }
+      /* 基準が欠けてもCPIは期間内で一定なので、実質の変化＝名目の変化として算出できる */
+      const rm0=REALMAP[tk], nom0=rm0&&CDATA[rm0[0]];
+      out[tk]= nom0? valForPage(nom0,p,rm0[0]) : null; return; }
     out[tk]=valForPage(m,p,tk);
   });
   return out;
@@ -3375,7 +3387,7 @@ async function fillD1(force){
     const act=d1ActualDate();
     if(act) d1SetLabel(act);
   }catch(e){ D1_DONE=false; }
-  D1_FIN=ALL.every(function(tk){ var m=CDATA[tk]; return D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0||(m&&typeof m.d1==="number"); });
+  D1_FIN=ALL.every(function(tk){ var m=CDATA[tk]; return D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0||REALKEYS.indexOf(tk)>=0||(m&&typeof m.d1==="number"); });
   /* ここから先は未取得を「取得できません」で確定 */
   D1_RUNNING=false;
   try{ d1Save(); }catch(e){}
