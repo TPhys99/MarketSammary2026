@@ -251,7 +251,7 @@ footer b{color:var(--tx)}
 
 <script>
 /* ビルド番号：納品物の版を画面でも確認できるようにする */
-const BUILD="v2026-11-11-1530";
+const BUILD="v2026-11-11-1600";
 try{ document.addEventListener("DOMContentLoaded",function(){ var e=document.getElementById("bld"); if(e) e.textContent=BUILD; }); }catch(e){}
 /* ================= 構成（銘柄リストのみ。数値は埋め込まず、開いた時点で取得） ================= */
 /* items: [表示名, ティッカー, 強調(任意 "hl"), 分配金込み(任意 "dv")] */
@@ -1054,6 +1054,39 @@ let JINA_FAIL=0, JINA_DEAD=false;
    これが無いと、塊ごと・銘柄ごとに数秒を空費して末尾セクションが間に合わなかった。 */
 function jinaAlive(){ return !JINA_DEAD; }
 function noteJina(ok){ if(ok){ JINA_FAIL=0; return; } if(++JINA_FAIL>=2) JINA_DEAD=true; }
+/* ===== プロキシプール（v1600） =====
+   旧設計は r.jina.ai 単一依存で、jina が匿名クエリを401拒否（IP評価）すると
+   Yahoo経由の取得が全滅し「取得中」が延々続いた。公開CORSプロキシを複数併用し、
+   生きているものを記憶して使う。各プロキシは2回連続失敗で以後スキップ、
+   最後に成功したものを localStorage に保存して次回はそこから試す。 */
+const PROXIES=[
+  function(u){ return "https://r.jina.ai/"+u; },
+  function(u){ return "https://api.codetabs.com/v1/proxy?quest="+encodeURIComponent(u); },
+  function(u){ return "https://api.allorigins.win/raw?url="+encodeURIComponent(u); },
+  function(u){ return "https://api.cors.lol/?url="+encodeURIComponent(u); }
+];
+let PX_GOOD=-1;
+try{ PX_GOOD=(JSON.parse(localStorage.getItem("ytd_px_v1")||"{\"g\":-1")).g|0; }catch(e){ PX_GOOD=-1; }
+function pxSave(){ try{ localStorage.setItem("ytd_px_v1",JSON.stringify({g:PX_GOOD})); }catch(e){} }
+let PX_FAIL={};
+function pxAlive(i){ return i===PX_GOOD || !(PX_FAIL[i]>=2); }
+function notePx(i,ok){ if(ok){ PX_FAIL[i]=0; PX_GOOD=i; pxSave(); return; } if(i!==PX_GOOD) PX_FAIL[i]=(PX_FAIL[i]||0)+1; }
+/* プロキシ経由の取得。記憶した有用プロキシを先頭に、生きている順に試して最初に本文を返した方を採用 */
+async function fetchProxied(url,ms){
+  const order=[];
+  if(PX_GOOD>=0&&PX_GOOD<PROXIES.length) order.push(PX_GOOD);
+  for(let i=0;i<PROXIES.length;i++){ if(order.indexOf(i)<0) order.push(i); }
+  for(let k=0;k<order.length;k++){
+    const i=order[k];
+    if(!pxAlive(i)) continue;
+    let r=null;
+    try{ r=await swr(PROXIES[i](url),ms,true); }catch(e){ r=null; }
+    const ok=!!(r&&r.body);
+    notePx(i,ok);
+    if(ok) return r;
+  }
+  return {status:-1,body:null};
+}
 
 async function fetchRaw(url,ms){
   const r=await swr(url,ms,true);
@@ -1067,7 +1100,7 @@ async function fetchWithJina(url,dms,jms){
     const r=await fetchDirect(url,dms);
     if(r.body) return r;
   }
-  const j=await fetchRaw("https://r.jina.ai/"+url, jms||8000);
+  const j=await fetchProxied(url, jms||8000);
   return j.body? j : {status:-1,body:null};
 }
 /* レート予算（r.jina.aiの20req/60秒）を消費しない直取得。CORS対応の配信元に使う */
@@ -1158,7 +1191,7 @@ async function fetchChunk(syms,order){
   for(let k=0;k<2;k++){
     if(!budgetOK()) return null;
     const u="https://"+hosts[(order+k)%2]+".finance.yahoo.com/v8/finance/spark?symbols="+syms.map(function(s){return encodeURIComponent(s);}).join(",")+"&range=2y&interval=1mo&indicators=close";
-    const r=await fetchRaw("https://r.jina.ai/"+u,T.spark);
+    const r=await fetchProxied(u,T.spark);
     if(!r.body) continue;
     try{
       const j=jsonOf(r.body); if(!j) continue;
@@ -1287,7 +1320,7 @@ async function prefetchIdx(list){
 async function fetchAdj(tk){
   const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)+"?range=2y&interval=1mo";
   let r=await fetchDirect(u,2000);                    /* 直取得が最速。実機ではほぼこれで返る */
-  if(!r.body) r=await fetchRaw("https://r.jina.ai/"+u,T.chart);
+  if(!r.body) r=await fetchProxied(u,T.chart);
   if(!r.body) return null;
   try{
     const j=jsonOf(r.body);
@@ -1736,7 +1769,7 @@ async function fillEmDecLazy(){
       const u="https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=171."+code
             +"&fields1=f1,f2,f3,f4&fields2=f51,f53"+v.q;
       let r=await fetchDirect(u,v.t);
-      if(!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+u,4000); }catch(e){} }
+      if(!r.body){ try{ r=await fetchProxied(u,4000); }catch(e){} }
       if(!r.body) continue;
       let mo=null;
       try{
@@ -1797,7 +1830,7 @@ async function fillOldLazy(){
       const u="https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=171."+EMCODES[tk]
             +"&fields1=f1,f2,f3,f4&fields2=f51,f53&klt=103&fqt=0&beg="+(YR-2)+"0601&end="+YR+pad2(MO)+pad2(NOW.getDate());
       let r=await fetchDirect(u,2500);
-      if(!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+u,4000); }catch(e){} }
+      if(!r.body){ try{ r=await fetchProxied(u,4000); }catch(e){} }
       if(r.body){
         try{
           const body=textOf(r.body), a=body.indexOf("{");
@@ -1865,7 +1898,7 @@ async function fillGapLazy(){
     const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)
           +"?period1="+p1+"&period2="+p2+"&interval=1d";
     let r=await fetchDirect(u,3500);
-    if(!r.body){ try{ r=await fetchRaw("https://r.jina.ai/"+u,5000); }catch(e){} }
+    if(!r.body){ try{ r=await fetchProxied(u,5000); }catch(e){} }
     let ok=false;
     if(r.body){
       try{
@@ -2140,7 +2173,7 @@ async function fetchEmRateQuote(){
   }
   if(!n){
     try{
-      const r2=await fetchRaw("https://r.jina.ai/"+mk("push2his",codes),7000);
+      const r2=await fetchProxied(mk("push2his",codes),7000);
       if(r2&&r2.body){ const j2=jsonOf(r2.body); const a2=(j2&&j2.data&&j2.data.diff)||[]; if(a2.length) n+=emApply(a2,ref); }
     }catch(e){}
   }
@@ -2183,7 +2216,7 @@ async function fetchEm(tk){
     const T0=TRY[vi];
     const u=T0.u, IVS=[T0.iv];
     let r=null;
-    try{ r= T0.px? await fetchRaw("https://r.jina.ai/"+u,T0.t) : await fetchDirect(u,T0.t); }catch(e){ r=null; }
+    try{ r= T0.px? await fetchProxied(u,T0.t) : await fetchDirect(u,T0.t); }catch(e){ r=null; }
     if(!r||!r.body){
       /* 失敗したら少し待つ（連打がレート制限を招くため） */
       if(vi<TRY.length-1) await new Promise(function(z){ setTimeout(z,250+Math.floor(vi*180)); });
@@ -3425,10 +3458,9 @@ async function d1PassSpark(cut){
       /* 直取得とプロキシを同時に撃ち、先に本文が返った方を使う。
          以前は「プロキシ固定6秒→失敗時だけ直取得」で、塊ごとに最大6秒を失っていた。
          その結果、末尾セクションが予算切れで毎回未取得になっていた。 */
-      const rs=await Promise.all([
-        fetchDirect(q.replace("{0}","2"),2400).catch(function(){ return null; }),
-        (jinaAlive()? fetchRaw("https://r.jina.ai/"+q.replace("{0}","1"),4200).catch(function(){ return null; }) : Promise.resolve(null))
-      ]);
+      let rs=[null,null];
+      try{ rs[0]=await fetchDirect(q.replace("{0}","2"),2400); }catch(e){ rs[0]=null; }
+      if(!(rs[0]&&rs[0].body)){ try{ rs[1]=await fetchProxied(q.replace("{0}","1"),4200); }catch(e){ rs[1]=null; } }
       let got=0;
       for(let z=0;z<rs.length;z++){
         const r=rs[z]; if(!r||!r.body) continue;
@@ -3464,7 +3496,7 @@ async function d1PassChart(cut,list){
       const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)+"?range="+rg+"&interval=1d";
       let r=null; try{ r=await fetchDirect(u,2200); }catch(e){}
       /* プロキシは1件5秒近くかかる。全体予算を過ぎたら使わない（タブが固まるのを防ぐ） */
-      if((!r||!r.body) && jinaAlive() && Date.now()<D1_CHART_BUDGET){ try{ r=await fetchRaw("https://r.jina.ai/"+u,4000); }catch(e){} }
+      if((!r||!r.body) && Date.now()<D1_CHART_BUDGET){ try{ r=await fetchProxied(u,4000); }catch(e){} }
       if(!r||!r.body) return;
       try{
         const j=jsonOf(r.body), res=j&&j.chart&&j.chart.result&&j.chart.result[0];
