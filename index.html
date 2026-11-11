@@ -251,7 +251,7 @@ footer b{color:var(--tx)}
 
 <script>
 /* ビルド番号：納品物の版を画面でも確認できるようにする */
-const BUILD="v2026-11-11-1436";
+const BUILD="v2026-11-11-1530";
 try{ document.addEventListener("DOMContentLoaded",function(){ var e=document.getElementById("bld"); if(e) e.textContent=BUILD; }); }catch(e){}
 /* ================= 構成（銘柄リストのみ。数値は埋め込まず、開いた時点で取得） ================= */
 /* items: [表示名, ティッカー, 強調(任意 "hl"), 分配金込み(任意 "dv")] */
@@ -2842,6 +2842,7 @@ function openChart(tk){
 function closeChart(){
   /* 開くときだけ付けていた hmmode を閉じる時に外す（外さないと以後の月次グラフが黒背景×暗色文字になる） */
   try{ document.body.classList.remove("hmmode"); }catch(e){}
+  try{ var __cs=document.querySelector(".chsheet"); if(__cs) __cs.classList.remove("hmmode"); }catch(e){}
 
   CHART_TK=null;
   document.getElementById("chov").hidden=true;
@@ -3555,6 +3556,7 @@ try{
 <div class="chartwrap" id="chw"></div>
 <div class="chft" id="chft"></div></div></div>
 
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>

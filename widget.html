@@ -241,7 +241,7 @@ body{
 
 <script>
 /* ビルド番号：納品物の版を画面でも確認できるようにする */
-const BUILD="v2026-11-11-1436";   /* 日本時間(JST)基準。旧buildの"0446"はUTC表記だった */
+const BUILD="v2026-11-11-1530";   /* 日本時間(JST)基準。旧buildの"0446"はUTC表記だった */
 try{ document.addEventListener("DOMContentLoaded",function(){ var e=document.getElementById("bld"); if(e) e.textContent=BUILD; }); }catch(e){}
 
 /* ================= 構成（銘柄リストのみ。数値は埋め込まず、開いた時点で取得） ================= */
@@ -2775,6 +2775,7 @@ function openChart(tk){
 function closeChart(){
   /* 開くときだけ付けていた hmmode を閉じる時に外す（外さないと以後の月次グラフが黒背景×暗色文字になる） */
   try{ document.body.classList.remove("hmmode"); }catch(e){}
+  try{ var __cs=document.querySelector(".chsheet"); if(__cs) __cs.classList.remove("hmmode"); }catch(e){}
 
   CHART_TK=null;
   document.getElementById("chov").hidden=true;
@@ -3470,7 +3471,7 @@ const WSCALE_M  =[3,3,20,20,20,20,20,20,20,20];            /* 各月：−20〜+
 const WSCALE_D  =[0.3,0.3,3,3,3,3,3,3,3,3];                  /* 最新1日：−3〜+3% / 実質−0.3〜+0.3pt */
 const WSCALE=WSCALE_YTD;   /* 後方互換（描画時は wScale() を使う） */
 function wScale(){ const p=PERIODS[CUR]; if(p&&p.d1) return WSCALE_D; return CUR===0 ? WSCALE_YTD : WSCALE_M; }
-const WUNIT =["%","pt","%","%","%","%","%","%","%","%"];
+const WUNIT =["pt","pt","%","%","%","%","%","%","%","%"];
 const WMAX=[];
 
 /* 項目名の後ろにティッカーを添える（「日本(EWJ)」形式やコード名は重複させない） */
@@ -3491,7 +3492,7 @@ function wRender(){
     h+='<section class="wsec"><div class="wsh" data-sec="'+i+'">'
       +'<span class="num">'+(i+1)+'</span>'
       +'<span class="tm">'+esc(title)+'</span>'
-      +'<span class="sc" title="'+(i===1
+      +'<span class="sc" title="'+(i<=1
           ? (CUR===0?'前年12月との差（ポイント）。バーは−10〜+10ptで満杯':'前月との差（ポイント）。バーは−3〜+3ptで満杯')
           : ((PERIODS[CUR]&&PERIODS[CUR].d1)?'前日比の変化率。バーは−3〜+3%で満杯'
              :(CUR===0?'前年12月比の変化率。バーは−100〜+100%で満杯':'前月比の変化率。バーは−20〜+20%で満杯')))+'">バー範囲 ±'+(SC[i]||100)+(WUNIT[i]||"%")+'</span></div>'
@@ -3665,6 +3666,7 @@ setInterval(function(){ if(document.hidden) return; try{ wRender(); }catch(e){} 
 <div class="chartwrap" id="chw"></div>
 <div class="chft" id="chft"></div></div></div>
 
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
