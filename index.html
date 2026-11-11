@@ -252,7 +252,7 @@ footer b{color:var(--tx)}
 
 <script>
 /* ビルド番号：納品物の版を画面でも確認できるようにする */
-const BUILD="v2026-11-11-1424";
+const BUILD="v2026-11-11-1428";
 try{ document.addEventListener("DOMContentLoaded",function(){ var e=document.getElementById("bld"); if(e) e.textContent=BUILD; }); }catch(e){}
 /* ================= 構成（銘柄リストのみ。数値は埋め込まず、開いた時点で取得） ================= */
 /* items: [表示名, ティッカー, 強調(任意 "hl"), 分配金込み(任意 "dv")] */
@@ -923,7 +923,7 @@ function sectionHtml(s,idx,V){
      スケールが読めないため、単位と桁を切り替える。 */
   const rateSec=realItems(s).length>0 && realItems(s).every(function(it){ return isRate(it[1]); });
   const mxTxt=hasData? (rateSec? "最大 ±"+mx.toFixed(2)+"pt" : "最大 ±"+mx.toFixed(1)+"%") : "集計中…";
-  return "<section class=\"card\" id=\"s"+idx+"\"><h2>"+esc(s.t)+"<span class=\"mx\">"+mxTxt+"</span></h2>"
+  return "<section class=\"card\" id=\"s"+idx+"\"><h2 data-sec=\""+idx+"\">"+esc(s.t)+"<span class=\"mx\">"+mxTxt+"</span></h2>"
         +top5Html(s,V,complete)+out+"</section>";
 }
 let FIT_TRIES=0;
@@ -3083,18 +3083,32 @@ function openHeat(i){
   drawHeat(i);
 }
 function bindHeat(){
-  /* widget は見出しを <div class="wsh"> で生成するため、h2/h3 だけを探すと
-        ヒートマップが一度も開けなかった（board は h2 なので従来どおり動く） */
+  /* 見出しは board=<h2> / widget=<div class="wsh"> と構造が違う。しかも widget の
+     テキストは「1名目市場金利 … バー範囲 ±100%」で、セクション正式名（主要国名目市場金利）
+     とは一致しないため、テキスト照合では絶対に当たらなかった。
+     → 描画側で data-sec="番号" を付け、それを最優先で拾う（テキスト照合は保険）。 */
+  const hit=function(i,n){
+    if(n.__hm!==undefined) return false;
+    n.__hm=i; n.classList.add("hmhit"); n.style.cursor="pointer";
+    n.setAttribute("role","button"); n.setAttribute("tabindex","0");
+    n.addEventListener("click",function(e){ e.stopPropagation(); openHeat(i); });
+    n.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openHeat(i); } });
+    return true;
+  };
+  const marks=[].slice.call(document.querySelectorAll("[data-sec]"));
+  for(let k=0;k<marks.length;k++){
+    const i=parseInt(marks[k].getAttribute("data-sec"),10);
+    if(!(i>=0)) continue;
+    hit(i,marks[k]);
+  }
+  /* 保険：data-sec が無い古いDOMや、番号が欠けた場合のテキスト照合 */
   const nodes=[].slice.call(document.querySelectorAll("h2,h3,.sechd,.shd,.sh,.wsh"));
   SECTIONS.forEach(function(s,i){
     for(let k=0;k<nodes.length;k++){
       const n=nodes[k];
       if(n.__hm!==undefined) continue;
-      if((n.textContent||"").trim().indexOf(s.t)===0){
-        n.__hm=i; n.classList.add("hmhit"); n.style.cursor="pointer";
-        n.addEventListener("click",function(e){ e.stopPropagation(); openHeat(i); });
-        break;
-      }
+      const t=(n.textContent||"").replace(/^[\s\d.・|｜]+/,"").trim();
+      if(t.indexOf(s.t)===0||s.t.indexOf(t)===0){ hit(i,n); break; }
     }
   });
 }
