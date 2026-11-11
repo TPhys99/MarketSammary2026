@@ -241,7 +241,8 @@ body{
 
 <script>
 /* ビルド番号：納品物の版を画面でも確認できるようにする */
-const BUILD="v2026-11-11-1428";
+const BUILD="v2026-11-11-1436";   /* 日本時間(JST)基準。旧buildの"0446"はUTC表記だった */
+try{ document.addEventListener("DOMContentLoaded",function(){ var e=document.getElementById("bld"); if(e) e.textContent=BUILD; }); }catch(e){}
 
 /* ================= 構成（銘柄リストのみ。数値は埋め込まず、開いた時点で取得） ================= */
 /* items: [表示名, ティッカー, 強調(任意 "hl"), 分配金込み(任意 "dv")] */
@@ -3034,6 +3035,31 @@ function bindHeat(){
     }
   });
 }
+/* ヒートマップのクリックは「見出し要素に付けたリスナー」ではなく、
+   文書全体のイベント委譲で受ける。widget は 1.5 秒ごとに #wrap を作り直すため、
+   要素に付けたリスナーは作り直しの瞬間に消える（＝クリックしても何も起きない時間帯ができる）。
+   委譲なら DOM が差し替わっても常に効く。行タップ（月次グラフ）は data-tk で除外する。 */
+function heatDelegateInit(){
+  if(window.__hmDeleg) return; window.__hmDeleg=true;
+  document.addEventListener("click",function(e){
+    const t=e.target;
+    if(!t||!t.closest) return;
+    if(t.closest(".row,.wr,[data-tk]")) return;          /* 行＝月次グラフ（既存仕様） */
+    const mk=t.closest("[data-sec]");
+    if(mk){
+      const i=parseInt(mk.getAttribute("data-sec"),10);
+      if(i>=0){ e.preventDefault(); e.stopPropagation(); openHeat(i); return; }
+    }
+    /* data-sec を持たない古いDOMでも、セクション要素の並び順から番号を特定できる */
+    const card=t.closest("section.card,section.wsec,section");
+    if(!card) return;
+    const all=[].slice.call(document.querySelectorAll("section.card,section.wsec,section"));
+    const idx=all.indexOf(card);
+    if(idx>=0&&idx<SECTIONS.length){ e.preventDefault(); e.stopPropagation(); openHeat(idx); }
+  },true);
+}
+heatDelegateInit();
+
 try{
   new MutationObserver(function(){ bindHeat(); }).observe(document.body,{childList:true,subtree:true});
 }catch(e){}
