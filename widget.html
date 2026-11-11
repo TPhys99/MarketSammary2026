@@ -675,16 +675,31 @@ function pageValsInner(){
         let pt=(typeof m.d1pt==="number"&&isFinite(m.d1pt))? m.d1pt : null;
         if(pt===null){
           const rm=REALMAP[tk], nom=rm&&CDATA[rm[0]];
-          if(nom&&typeof nom.d1pt==="number"&&isFinite(nom.d1pt)) pt=nom.d1pt;
+          if(nom){
+            if(typeof nom.d1pt==="number"&&isFinite(nom.d1pt)) pt=nom.d1pt;
+            /* 名目が「%変化(d1)」しか持たない取得元（米財務省CSV等）でもptに変換できる。
+               pt = last − last/(1+d1/100)。これが無いと実質金利だけ
+               V=null になり「集計中…」＋ヒートマップ空になる（行だけは cd.last で描くため気付きにくい）。 */
+            else if(typeof nom.d1==="number"&&isFinite(nom.d1)&&typeof nom.last==="number"&&nom.last>0&&nom.d1!==-100){
+              pt=+(nom.last-nom.last/(1+nom.d1/100)).toFixed(3);
+            }
+          }
         }
-        if(pt!==null) return +pt.toFixed(2);
-        return D1_FIN? null : undefined;
+        /* forEach のコールバックなので return した値は捨てられる。必ず out に代入する
+           （ここを return にしていたため実質金利だけ常に undefined＝「集計中…」だった） */
+        if(pt!==null){ out[tk]=+pt.toFixed(2); return; }
+        out[tk]=D1_FIN? null : undefined; return;
       }
-      const b=m.map? (m.map[(YR-1)+"-12"]!==undefined? m.map[(YR-1)+"-12"] : decGet(tk)) : undefined;
-      if(typeof b==="number"&&typeof m.last==="number"){ out[tk]=+(m.last-b).toFixed(2); return; }
-      /* 基準が欠けてもCPIは期間内で一定なので、実質の変化＝名目の変化として算出できる */
-      const rm0=REALMAP[tk], nom0=rm0&&CDATA[rm0[0]];
-      out[tk]= nom0? valForPage(nom0,p,rm0[0]) : null; return; }
+      /* 実質金利の月次・年初来変化(pt)＝名目10年の変化（CPIは期間内で一定）。
+         基準月は「選んだタブ」から決める。以前は前年12月固定だったため、
+         月次タブでも年初来差が表示されていた。 */
+      let bk;
+      if(p.id==="ytd") bk=(YR-1)+"-12";
+      else bk=(p.mm===1? (p.ym-1)+"-12" : p.ym+"-"+pad2(p.mm-1));
+      let b=m.map[bk];
+      if(b===undefined && bk===(YR-1)+"-12") b=decGet(tk);
+      if(b===undefined) b=nearBefore(m.map, (p.id==="ytd")? YR+"-01" : p.ym+"-"+pad2(p.mm));
+      out[tk]=(typeof b==="number"&&typeof m.last==="number")? +(m.last-b).toFixed(2) : null; return; }
     out[tk]=valForPage(m,p,tk);
   });
   return out;
@@ -812,13 +827,14 @@ function rowHtml(it,V,mx,hasData){
   const SRCABBR={"Bundesbank":"独","米財務省":"米","財務省":"日","東方財富":"財富","東財API":"財富","ECB":"ECB","DBnomics":"DBN","Eurostat":"欧"};
   if(/RR$/.test(tk)){
     const inf=cd&&cd.inf; const base=cd&&cd.map? (cd.map[(YR-1)+"-12"]!==undefined? cd.map[(YR-1)+"-12"] : decGet(tk)) : undefined;
-    const dl=(cd&&typeof base==="number"&&typeof cd.last==="number")? +(cd.last-base).toFixed(2) : null;
+    /* 選択タブの変化量(v)をそのまま使う。前年12月固定だと全タブで年初来差になっていた */
+    const dl=(typeof v==="number"&&isFinite(v))? +v.toFixed(2) : null;
     const badge=(cd&&typeof cd.last==="number")
       ? "<i class=\"rt\" title=\"10年国債利回り−CPI上昇率（CPI "+(cd.infY||"")+"年 "+(inf!==undefined?inf.toFixed(2):"-")+"%）\"><u>10年実質</u> "+cd.last.toFixed(2)+"%</i>" : "";
     const nmRR="<div class=\"nm\">"+esc(n)+badge+d1Badge(tk)+"</div>";
     if(!cd||typeof cd.last!=="number") return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl na\">取得中…</div><div class=\"bar\"></div></div>";
     if(dl===null) return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl na\">基準なし</div><div class=\"bar\"></div></div>";
-    const pos=dl>0, w=Math.max(0.6,Math.min(1,Math.abs(dl)/2)*50).toFixed(1);
+    const pos=dl>0, w=Math.max(0.6,Math.min(1,Math.abs(dl)/Math.max(1e-9,(typeof mx==="number"&&mx>0?mx:2)))*50).toFixed(1);
     return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl "+(pos?"p":"n")+"\">"+(dl>0?"+":"")+dl.toFixed(2)+"pt</div>"
       +"<div class=\"bar\"><i class=\""+(pos?"p":"n")+"\" style=\"width:"+w+"%;background:"+colorOf(dl*25)+"\"></i></div></div>";
   }
@@ -864,7 +880,10 @@ function sectionHtml(s,idx,V){
     if(isHL(it)) buf.push(r); else { flush(); out+=r; }
   });
   flush();
-  const mxTxt=hasData? "最大 ±"+mx.toFixed(1)+"%" : "集計中…";
+  /* 金利セクションは単位が pt（変化幅）。%表記のままだと 0.02pt が「±0.0%」になり
+     スケールが読めないため、単位と桁を切り替える。 */
+  const rateSec=realItems(s).length>0 && realItems(s).every(function(it){ return isRate(it[1]); });
+  const mxTxt=hasData? (rateSec? "最大 ±"+mx.toFixed(2)+"pt" : "最大 ±"+mx.toFixed(1)+"%") : "集計中…";
   return "<section class=\"card\" id=\"s"+idx+"\"><h2>"+esc(s.t)+"<span class=\"mx\">"+mxTxt+"</span></h2>"
         +top5Html(s,V,complete)+out+"</section>";
 }
@@ -1070,6 +1089,9 @@ function monthMap(ts,px,endTs,tz){
 function liveFix(m,res){
   const meta=(res&&res.meta)||{};
   const p=meta.regularMarketPrice;
+  /* 月足(1mo)系列に現在値を混ぜると「前日終値=p」で d1≈0%、日付だけ当日という不整合になる。
+     日足(1d)系列のときだけ現在値を採用する。 */
+  if(meta.dataGranularity==="1mo") return m;
   if(!m||typeof p!=="number"||!isFinite(p)||p<=0) return m;
   const t=meta.regularMarketTime;
   const d=t? new Date(t*1000) : new Date();
@@ -1290,7 +1312,10 @@ function loadSnap(){
 }
 function saveSnap(){
   try{
-    const d={}; ALL.forEach(function(tk){ if(CDATA[tk]) d[tk]=CDATA[tk]; });
+    const d={}; let cnt=0; ALL.forEach(function(tk){ if(CDATA[tk]){ d[tk]=CDATA[tk]; cnt++; } });
+    /* 1件も取れていない回で ts を進めると、次回起動時に「キャッシュあり」と誤判定して
+       通信せず古い基準日のまま固定される。値がある時だけ更新する。 */
+    if(!cnt) return;
     SNAP_TS=Date.now();
     localStorage.setItem(SNAP_KEY,JSON.stringify({ts:SNAP_TS,asof:ASOF,d:d}));
   }catch(e){
@@ -2063,6 +2088,9 @@ function emApply(arr,ref){
     delete m.mstate;                     /* 場中判定は取引所時計で行う（d1IsLive） */
     n++;
   });
+  /* 東財クォートは setRate を経由せず CDATA を直接書くため、ここで実質金利を再合成する。
+     無いと名目だけ更新されて実質金利が古いCPI水準のまま取り残される。 */
+  try{ if(n && typeof recomputeReal==="function") recomputeReal(); }catch(e){}
   return n;
 }
 async function fetchEmRateQuote(){
@@ -2230,7 +2258,7 @@ function recomputeReal(){
     const map={};
     Object.keys(nom.map||{}).forEach(function(k){ map[k]=+(nom.map[k]-inf.v).toFixed(3); });
     setRate(rk,{map:map,last:+(nom.last-inf.v).toFixed(3),asof:nom.asof,rate:true,rr:true,inf:inf.v,infY:inf.y,
-      d1:nom.d1,d1pt:(typeof nom.d1pt==="number")? nom.d1pt : undefined},"実質=名目−CPI");
+      d1:(function(){ const pt=(typeof nom.d1pt==="number"&&isFinite(nom.d1pt))? nom.d1pt : null; if(pt===null) return nom.d1; const prev=(nom.last-inf.v)-pt; return (prev>0.02)? +((pt/prev)*100).toFixed(2) : nom.d1; })(),d1pt:(typeof nom.d1pt==="number")? nom.d1pt : undefined},"実質=名目−CPI");
   });
 }
 async function fetchRates(prog){
@@ -2722,6 +2750,9 @@ function openChart(tk){
   }
 }
 function closeChart(){
+  /* 開くときだけ付けていた hmmode を閉じる時に外す（外さないと以後の月次グラフが黒背景×暗色文字になる） */
+  try{ document.body.classList.remove("hmmode"); }catch(e){}
+
   CHART_TK=null;
   document.getElementById("chov").hidden=true;
   document.body.style.overflow="";
@@ -2952,13 +2983,15 @@ function openHeat(i){
   drawHeat(i);
 }
 function bindHeat(){
-  const nodes=[].slice.call(document.querySelectorAll("h2,h3,.sechd,.shd,.sh"));
+  /* widget は見出しを <div class="wsh"> で生成するため、h2/h3 だけを探すと
+        ヒートマップが一度も開けなかった（board は h2 なので従来どおり動く） */
+  const nodes=[].slice.call(document.querySelectorAll("h2,h3,.sechd,.shd,.sh,.wsh"));
   SECTIONS.forEach(function(s,i){
     for(let k=0;k<nodes.length;k++){
       const n=nodes[k];
       if(n.__hm!==undefined) continue;
       if((n.textContent||"").trim().indexOf(s.t)===0){
-        n.__hm=i; n.classList.add("hmhit");
+        n.__hm=i; n.classList.add("hmhit"); n.style.cursor="pointer";
         n.addEventListener("click",function(e){ e.stopPropagation(); openHeat(i); });
         break;
       }
@@ -2997,7 +3030,7 @@ function d1Left(){ return D1_FIN? 0 : Math.max(0,Math.ceil((D1_DL-Date.now())/10
 /* 取得済みの日次騰落率をlocalStorageへ保存（次回起動時に通信ゼロで復元） */
 const D1_KEY="ytd_d1_v3";
 function d1Save(){
-  const o={cut:d1Cut(),d:{}};
+  const o={ts:Date.now(),cut:d1Cut(),d:{}};
   ALL.forEach(function(tk){ const m=CDATA[tk]; if(m&&typeof m.d1==="number") o.d[tk]=[m.d1,m.d1d||null]; });
   try{ localStorage.setItem(D1_KEY,JSON.stringify(o)); }catch(e){}
 }
@@ -3012,7 +3045,9 @@ function d1Load(){
       const d=d1Ymd(a[1]); if(!d) return;
       const exp=d1Expect(tk);
       if(exp&&d<exp) return;                 /* その取引所の最新営業日に満たない＝古い */
-      if(lim&&d>lim&&!/RR$/.test(tk)) return;
+      /* lim は金利CSVの日付。株価の期待最新日と一致しない場合があるため、
+        取引所の期待日そのものなら有効として残す（無いと日次キャッシュが常に空になる）。 */
+      if(lim&&d>lim&&d!==exp&&!/RR$/.test(tk)) return;
       D1STORE[tk]=[a[0],d]; n++;
       const m=CDATA[tk];
       if(m&&typeof m.d1!=="number"){ m.d1=a[0]; m.d1d=d; }
@@ -3399,7 +3434,11 @@ function wRender(){
     });
     h+='</section>';
   });
-  const _w=document.getElementById('wrap'); _w.className=''; _w.innerHTML=h;
+  const _w=document.getElementById('wrap'); _w.className=''; _w/* 1.5秒ごとに全体を差し替えると、その瞬間のタップを取りこぼす。
+     生成結果が前回と同一なら DOM を触らない（内容が変わった時だけ描き直す）。 */
+    if(window.__wlast===h) return;
+    window.__wlast=h;
+    .innerHTML=h;
   const p=PERIODS[CUR];
   document.getElementById('fst').textContent=p.label+(ASOF? ' ／ 基準 '+ASOF:'');
 }
