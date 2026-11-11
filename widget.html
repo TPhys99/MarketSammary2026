@@ -432,6 +432,7 @@ function colorOf(v){
 }
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
 function fnum(v){ return (v>0?"+":"")+v.toFixed(2)+"%"; }
+function fnumU(v,u){ return (v>0?"+":"")+v.toFixed(2)+(u||"%"); }
 
 document.getElementById("scale").innerHTML=[-100,-50,-25,-10,-5,0,5,10,25,50,100].map(function(v){
   return "<div><i style=\"background:"+colorOf(v)+"\"></i><b>"+(v>0?"+":"")+v+"%</b></div>";
@@ -635,7 +636,11 @@ function valForPage(m,p,tk){
     if(b===undefined) b=decGet(tk);
     if(b===undefined) b=nearBefore(m.map, YR+"-01");
     /* 年初比の基準は前年12月の最終営業日。基準そのものが欠ける場合は採用しない（誤差の原因） */
-    return (b&&m.last)? +(INVTK[tk]? (b/m.last-1)*100 : (m.last/b-1)*100).toFixed(2) : null;
+    if(!(b&&typeof m.last==="number")) return null;
+    /* 金利は「水準の差（pt）」。%変化で出すと 4.73%/3.47%＝+36% のような誤値になる。
+       CPI由来の実質金利と単位を揃えるため、名目も必ずptで返す。 */
+    if(isRate(tk)) return +(m.last-b).toFixed(2);
+    return +(INVTK[tk]? (b/m.last-1)*100 : (m.last/b-1)*100).toFixed(2);
   }
   /* 未来月（今月より先）は必ず空。データ源に将来日付が混入しても表示しない */
   if(p.ym===YR && p.mm>MO) return null;
@@ -648,7 +653,9 @@ function valForPage(m,p,tk){
     const keys=Object.keys(m.map).sort(), lk=keys[keys.length-1];
     if(lk===ck) c=m.last;
   }
-  return (b&&c)? +(INVTK[tk]? (b/c-1)*100 : (c/b-1)*100).toFixed(2) : null;
+  if(!(b&&c)) return null;
+  if(isRate(tk)) return +(c-b).toFixed(2);      /* 金利はpt（水準差） */
+  return +(INVTK[tk]? (b/c-1)*100 : (c/b-1)*100).toFixed(2);
 }
 function pageVals(){ const __r=pageValsInner(); try{ window.__V=__r; }catch(e){} return __r; }
 function pageValsInner(){
@@ -821,6 +828,7 @@ function d1Badge(tk){
 }
 function rowHtml(it,V,mx,hasData){
   const n=it[0], tk=it[1], v=V[tk], cd=CDATA[tk];
+  const U=isRate(tk)?"pt":"%";   /* 金利は結果をptで表示する */
   const dv=it.indexOf("dv")>=0? (cd&&cd.adj===false
       ? "<i class=\"dv\" title=\"調整後終値を取得できなかったため、分配金を含まない価格ベースの値です\">配?</i>"
       : "<i class=\"dv\" title=\"分配金込み（調整後終値）\">配</i>") : "";
@@ -839,8 +847,10 @@ function rowHtml(it,V,mx,hasData){
       +"<div class=\"bar\"><i class=\""+(pos?"p":"n")+"\" style=\"width:"+w+"%;background:"+colorOf(dl*25)+"\"></i></div></div>";
   }
   const tn=/2Y$/.test(tk)? "2年" : (/10Y$/.test(tk)? "10年" : "");
+  /* 項目名が既に年限を含む場合（米国2年）は「2年国債」を重ねない */
+  const dupT=/国債/.test(n)||/(2年|10年)$/.test(String(n).trim());
   const rt=(it[3]==="rt"&&cd&&typeof cd.last==="number")
-    ? "<i class=\"rt\" title=\"直近の"+tn+"国債利回り（出所："+(RSRC[tk]||"-")+"）\"><u>"+tn+"国債</u> "+cd.last.toFixed(2)+"%<b class=\"src\">"+(SRCABBR[RSRC[tk]]||"?")+"</b></i>":"";
+    ? "<i class=\"rt\" title=\"直近の"+tn+"国債利回り（出所："+(RSRC[tk]||"-")+"）\">"+(dupT?"":"<u>"+tn+"国債</u> ")+cd.last.toFixed(2)+"%<b class=\"src\">"+(SRCABBR[RSRC[tk]]||"?")+"</b></i>":"";
   void SRCABBR;
   const nm="<div class=\"nm\">"+esc(n)+dv+rt+d1Badge(tk)+"</div>";
   if(v===undefined){
@@ -853,20 +863,20 @@ function rowHtml(it,V,mx,hasData){
   const t=hasData? Math.min(1,Math.abs(v)/(mx||1)) : 0;
   const pos=v>0, w=Math.max(0.6,t*50).toFixed(1);
   return "<div class=\"row\" data-tk=\""+tk+"\">"+nm
-    +"<div class=\"vl "+(pos?"p":"n")+"\">"+fnum(v)+over+"</div>"
-    +"<div class=\"bar\"><i class=\""+(pos?"p":"n")+"\" style=\"width:"+w+"%;background:"+colorOf(v)+"\"></i></div></div>";
+    +"<div class=\"vl "+(pos?"p":"n")+"\">"+fnumU(v,U)+over+"</div>"
+    +"<div class=\"bar\"><i class=\""+(pos?"p":"n")+"\" style=\"width:"+w+"%;background:"+colorOf(U==="pt"? v*10 : v)+"\"></i></div></div>";
 }
 function top5Html(s,V,complete){
   if(!complete) return "";
-  const arr=realItems(s).map(function(it){ return [it[0],V[it[1]]]; })
+  const arr=realItems(s).map(function(it){ return [it[0],V[it[1]],isRate(it[1])?"pt":"%"]; })
                   .filter(function(x){ return typeof x[1]==="number"; })
                   .sort(function(a,b){ return b[1]-a[1]; });
   if(!arr.length) return "";
   const top=arr.slice(0,5), low=arr[arr.length-1];
   return "<div class=\"top5\"><span class=\"lb\">騰落率上位"+top.length+"</span>"+top.map(function(x,i){
-    return "<span class=\"ch"+(x[1]<0?" dn":"")+"\"><i>"+(i+1)+"</i>"+esc(x[0])+" <b>"+fnum(x[1])+"</b></span>";
+    return "<span class=\"ch"+(x[1]<0?" dn":"")+"\"><i>"+(i+1)+"</i>"+esc(x[0])+" <b>"+fnumU(x[1],x[2])+"</b></span>";
   }).join("")
-  + (arr.length>5? "<span class=\"low\">最下位 "+esc(low[0])+" "+fnum(low[1])+"</span>" : "")
+  + (arr.length>5? "<span class=\"low\">最下位 "+esc(low[0])+" "+fnumU(low[1],low[2])+"</span>" : "")
   + "</div>";
 }
 function sectionHtml(s,idx,V){
@@ -1037,7 +1047,17 @@ async function swr(url,ms,useBudget){
   return netGet(url,ms,useBudget);
 }
 /* レート予算（r.jina.ai 20req/60秒）を消費する取得 */
-async function fetchRaw(url,ms){ return swr(url,ms,true); }
+let JINA_FAIL=0, JINA_DEAD=false;
+/* プロxyが401/接続不可の環境では、毎回待つだけ無駄。2回続けて失敗したら以後は試さない。
+   これが無いと、塊ごと・銘柄ごとに数秒を空費して末尾セクションが間に合わなかった。 */
+function jinaAlive(){ return !JINA_DEAD; }
+function noteJina(ok){ if(ok){ JINA_FAIL=0; return; } if(++JINA_FAIL>=2) JINA_DEAD=true; }
+
+async function fetchRaw(url,ms){
+  const r=await swr(url,ms,true);
+  if(String(url).indexOf("https://r.jina.ai/")===0) noteJina(!!(r&&r.body));
+  return r;
+}
 /* 直取得（CORS可なら最速）→ 失敗時は jina 経由。第2パスでは jina を直接使う */
 let SLOW_RETRY=false;
 async function fetchWithJina(url,dms,jms){
@@ -3022,6 +3042,8 @@ let D1_RUNNING=false, D1_DONE=false, D1_LASTTRY=0;
 /* 日次騰落率を持てない項目（PCCはYahooに日足系列が無い）。完了判定から除外し「—」表示にする */
 const D1SKIP={PCC:1};
 let D1_FIN=false, D1_DL=Date.now()+18000, D1_CHART_BUDGET=0;
+/* 銘柄ごとの試行回数。取れない銘柄（不正シンボル・配信停止）を永久に再取得しないため */
+let D1_TRIES={};
 /* 日次騰落率の独立ストア。スナップショットが失効していても当日分を即再表示できるよう、
    CDATA とは別に保持する（毎回フル取得していたのが「最新1日が遅い」主因）。 */
 const D1STORE={};
@@ -3200,12 +3222,20 @@ function d1Put(tk,d1,d1d){
 }
 function d1Need(tk,cut){
   if(D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0||REALKEYS.indexOf(tk)>=0) return false;
+  /* 2回試して取れない銘柄は諦める（永久リトライで他の銘柄の枠を奪うのを防ぐ） */
+  if((D1_TRIES[tk]||0)>=2) return false;
   const m=CDATA[tk];
   if(!m||typeof m.d1!=="number") return true;
   const exp=d1Expect(tk);
   const d=d1Ymd(m.d1d)||d1Ymd(D1STORE[tk]&&D1STORE[tk][1]);
   if(!d) return true;
-  if(exp&&d<exp) return true;              /* その取引所の最新営業日より古い */
+  /* 24時間市場（暗号通貨）はYahooの日足が1日遅れることがあり、それを「未取得」と
+     判定すると毎回13銘柄を取り直して枠を食う。1日遅れは許容して確定させる。 */
+  if(!sessRange(tzOf(tk))&&exp&&d<exp){
+    const dd=(Date.parse(exp)-Date.parse(d))/864e5;
+    if(dd<=1) return false;
+  }
+  if(exp&&d<exp) return true; /* その取引所の最新営業日より古い */
   return false;
 }
 function d1FromRows(rows,cut){
@@ -3215,28 +3245,45 @@ function d1FromRows(rows,cut){
   if(!(b.v>0)) return null;
   return {d1:+(((c2.v/b.v)-1)*100).toFixed(2), d:c2.d};
 }
-async function d1PassSpark(cut){
-  /* 12銘柄ずつ（20だとYahoo側が一部を落とすことがある）。失敗時は別ホスト→プロキシへ。
-     パースできた銘柄が1件でもあればその塊は成功とみなし、残りはchart側で拾う */
-  const targets=ALL.filter(function(tk){
-    if(D1SKIP[tk]||RATEKEYS.indexOf(tk)>=0) return false;
-    const m=CDATA[tk], st=D1STORE[tk];
-    if(m&&typeof m.d1==="number"&&(!cut||m.d1d===cut)) return false;
-    if(st&&typeof st[0]==="number"&&(!cut||st[1]===cut)) return false;   /* 保存済みは取りに行かない */
-    return true;
+function d1Order(list){
+  /* セクション順のままだと、末尾のセクション（コモディティETF・暗号通貨）が
+     常に最後の塊になり、予算切れで毎回「未取得」になっていた。
+     セクションを巡回させて、先頭の塊に全セクションが混ざるようにする。 */
+  const seen={}, buckets=[];
+  SECTIONS.forEach(function(s){
+    const arr=[];
+    s.items.forEach(function(it){
+      if(isSub(it)) return;
+      const tk=it[1];
+      if(seen[tk]) return;
+      if(list.indexOf(tk)<0) return;
+      seen[tk]=1; arr.push(tk);
+    });
+    if(arr.length) buckets.push(arr);
   });
+  const extra=list.filter(function(tk){ return !seen[tk]; });
+  if(extra.length) buckets.push(extra);
+  const out=[]; let more=true;
+  while(more){ more=false; buckets.forEach(function(b){ if(b.length){ out.push(b.shift()); more=true; } }); }
+  const a=out.filter(function(tk){ return !(D1_TRIES[tk]>0); });
+  const b2=out.filter(function(tk){ return (D1_TRIES[tk]>0); });
+  return a.concat(b2);
+}
+
+async function d1PassSpark(cut){
+  const targets=d1Order(ALL.filter(function(tk){ return d1Need(tk,cut); }));
   if(!targets.length) return 0;
-  /* ここが「最新1日タブが遅い」最大の原因だった。
-     以前は12銘柄ずつ“完全に逐次”で、1塊ごとに最大3経路×7秒待っていたため、
-     95銘柄で最悪 8塊×20秒超＝2分近くかかっていた。
-     ・塊を並列3本で流す（同時4以上はYahoo側の429を招く）
-     ・直接取得のタイムアウトを 7秒→3.2秒 に短縮
-     ・全体の予算(D1_SPARK_MS)を使い切ったら打ち切り、残りはchart側へ回す */
-  const BUDGET=Date.now()+13000;
-  /* 再描画は間引く（チャンクごとに全体を組み直すと、8回×全行再構築で数百ms×8の無駄） */
+  /* 予算は10秒。直取得とプロキシを同時に撃つので、以前の「塊ごとに最大6秒待つ」より実測が短い */
+  const BUDGET=Date.now()+10000;
   let lastR=0;
-  const rSoon=function(){ const t=Date.now(); if(t-lastR<800) return; lastR=t; try{ render(false); }catch(e){} };
-  const chunks=[]; for(let i=0;i<targets.length;i+=20) chunks.push(targets.slice(i,i+20));   /* 12→25：リクエスト数半減 */
+  const rSoon=function(){ const t=Date.now(); if(t-lastR<700) return; lastR=t; try{ render(false); }catch(e){} };
+  /* 暗号通貨は24時間市場で応答が軽い。ETFと混ぜるとYahooが銘柄を取りこぼすため、
+     13銘柄を専用の塊にして最初に流す（待たされていた主因のひとつ）。 */
+  const isC=function(tk){ return /-USD$|-JPY$/.test(tk); };
+  const crypto=targets.filter(isC), rest=targets.filter(function(tk){ return !isC(tk); });
+  const chunks=[];
+  if(crypto.length) chunks.push(crypto.slice(0,20));
+  for(let i=0;i<rest.length;i+=20) chunks.push(rest.slice(i,i+20));
   let n=0, ci=0;
   async function worker(){
     while(ci<chunks.length){
@@ -3245,24 +3292,25 @@ async function d1PassSpark(cut){
       const q="https://query{0}.finance.yahoo.com/v8/finance/spark?symbols="
         +chunk.map(function(s){ return encodeURIComponent(s); }).join(",")
         +"&range=1mo&interval=1d&indicators=close";
-      for(let k=0;k<2;k++){
-        if(Date.now()>BUDGET) return;
-        let r=null;
-        try{
-          if(k===0) r=await fetchRaw("https://r.jina.ai/"+q.replace("{0}","1"),6000);
-          else r=await fetchDirect(q.replace("{0}","2"),3200);
-        }catch(e){ r=null; }
-        if(!r||!r.body) continue;
-        let got=0;
+      /* 直取得とプロキシを同時に撃ち、先に本文が返った方を使う。
+         以前は「プロキシ固定6秒→失敗時だけ直取得」で、塊ごとに最大6秒を失っていた。
+         その結果、末尾セクションが予算切れで毎回未取得になっていた。 */
+      const rs=await Promise.all([
+        fetchDirect(q.replace("{0}","2"),2400).catch(function(){ return null; }),
+        (jinaAlive()? fetchRaw("https://r.jina.ai/"+q.replace("{0}","1"),4200).catch(function(){ return null; }) : Promise.resolve(null))
+      ]);
+      let got=0;
+      for(let z=0;z<rs.length;z++){
+        const r=rs[z]; if(!r||!r.body) continue;
         try{
           const j=jsonOf(r.body); if(!j) continue;
           chunk.forEach(function(tk){
             const e=j[tk]; if(!e||!e.timestamp||!e.timestamp.length) return;
             const rows=[];
-            for(let z=0;z<e.timestamp.length;z++){
-              const v=(e.close||[])[z];
+            for(let m=0;m<e.timestamp.length;m++){
+              const v=(e.close||[])[m];
               if(typeof v!=="number"||!isFinite(v)) continue;
-              rows.push({d:tsYmd(e.timestamp[z],tzOf(tk)), v:v});
+              rows.push({d:tsYmd(e.timestamp[m],tzOf(tk)), v:v});
             }
             const o=d1FromRows(rows,cut);
             if(o&&d1Put(tk,o.d1,o.d)){ n++; got++; }
@@ -3278,12 +3326,15 @@ async function d1PassSpark(cut){
 }
 async function d1PassChart(cut,list){
   let n=0;
-  for(let i=0;i<list.length;i+=16){
-    await Promise.all(list.slice(i,i+16).map(async function(tk){
-      const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)+"?range=1mo&interval=1d";
-      let r=null; try{ r=await fetchDirect(u,3000); }catch(e){}
-      /* プロキシは1件あたり5秒かかる。全体予算を過ぎたら使わない（タブが固まるのを防ぐ） */
-      if((!r||!r.body) && Date.now()<D1_CHART_BUDGET){ try{ r=await fetchRaw("https://r.jina.ai/"+u,4500); }catch(e){} }
+  const q=d1Order(list);   /* セクション巡回順。末尾セクションが最後の波に固定されない */
+  for(let i=0;i<q.length;i+=16){
+    await Promise.all(q.slice(i,i+16).map(async function(tk){
+      /* 暗号通貨は5日分で足りる（1ヶ月分は応答が重く、13銘柄で無駄に時間を食う） */
+      const rg=/-USD$|-JPY$/.test(tk)? "5d" : "1mo";
+      const u="https://query1.finance.yahoo.com/v8/finance/chart/"+encodeURIComponent(tk)+"?range="+rg+"&interval=1d";
+      let r=null; try{ r=await fetchDirect(u,2200); }catch(e){}
+      /* プロキシは1件5秒近くかかる。全体予算を過ぎたら使わない（タブが固まるのを防ぐ） */
+      if((!r||!r.body) && jinaAlive() && Date.now()<D1_CHART_BUDGET){ try{ r=await fetchRaw("https://r.jina.ai/"+u,4000); }catch(e){} }
       if(!r||!r.body) return;
       try{
         const j=jsonOf(r.body), res=j&&j.chart&&j.chart.result&&j.chart.result[0];
@@ -3329,9 +3380,11 @@ async function fillD1(force){
     ]);
     let rest=ALL.filter(function(tk){ return d1Need(tk,cut); });
     /* chart側にも上限を設ける（プロキシ頼みで数十秒待つのを防ぐ） */
-    D1_CHART_BUDGET=Date.now()+7000;
+    D1_CHART_BUDGET=Date.now()+9000;
     if(rest.length) await d1PassChart(cut,rest);
     rest=ALL.filter(function(tk){ return d1Need(tk,cut); });
+    /* まだ取れていない銘柄の試行回数を数える（2回で打ち切り） */
+    rest.forEach(function(tk){ D1_TRIES[tk]=(D1_TRIES[tk]||0)+1; });
     /* 例外扱いの項目は最初から対象外。残りが無ければ「取得完了」として確定させる
        （ここを緩めると未取得が永久に「取得中」のままになり、数値が出ない） */
     D1_DONE=(rest.length===0);
@@ -3434,11 +3487,10 @@ function wRender(){
     });
     h+='</section>';
   });
-  const _w=document.getElementById('wrap'); _w.className=''; _w/* 1.5秒ごとに全体を差し替えると、その瞬間のタップを取りこぼす。
+  const _w=document.getElementById('wrap');
+  /* 1.5秒ごとに全体を差し替えると、その瞬間のタップを取りこぼす。
      生成結果が前回と同一なら DOM を触らない（内容が変わった時だけ描き直す）。 */
-    if(window.__wlast===h) return;
-    window.__wlast=h;
-    .innerHTML=h;
+  if(window.__wlast!==h){ window.__wlast=h; _w.className=''; _w.innerHTML=h; }
   const p=PERIODS[CUR];
   document.getElementById('fst').textContent=p.label+(ASOF? ' ／ 基準 '+ASOF:'');
 }
