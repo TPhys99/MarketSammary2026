@@ -178,6 +178,8 @@ body{
 .wax .ax b:nth-child(2){left:50%;transform:translateX(-50%)}
 .wax .ax b:nth-child(3){right:0}
 .wc.z{color:var(--tx2)}
+/* v1650: 当月未提供の暫定表示（前月末基準）はグレーで明示 */
+.wc.prov{opacity:.55}
 .wbar i.z{background:var(--tx2);opacity:.75;border-radius:2px}
 .wc.p{color:var(--up)}
 .wc.n{color:var(--dn)}
@@ -230,7 +232,7 @@ body{
 <body>
 <div id="tabs"></div>
 <div id="wrap"></div>
-<div id="foot"><span id="fst"></span><br><a id="full" href="#">全画面ダッシュボードを開く →</a></div>
+<div id="foot"><span id="fst"></span><br><a id="full" href="#">全画面ダッシュボードを開く →</a><div id="srcnote" style="font-size:10px;line-height:1.6;opacity:.7;margin-top:4px">データ出典： 財務省（mof.go.jp）／米国財務省（home.treasury.gov）／ECB（data.ecb.europa.eu）／Deutsche Bundesbank（bundesbank.de）／World Bank Open Data（CC BY 4.0）ほか。月次化・実質金利（名目−CPI）等の加工は本サイトによる。株価・FX・暗号は Yahoo Finance／東方財富の公開APIを訪問者のブラウザから直接取得（非公式・各社の利用規約をご確認ください）。本ページは市場データの表示であり投資助言ではありません。投資判断はご自身の責任で。</div></div>
 
 <div class="hide">
   <div id="scale"></div><div id="lgnote"></div><div id="sub"></div>
@@ -241,7 +243,7 @@ body{
 
 <script>
 /* ビルド番号：納品物の版を画面でも確認できるようにする */
-const BUILD="v2026-11-11-1600";   /* 日本時間(JST)基準。旧buildの"0446"はUTC表記だった */
+const BUILD="v2026-11-14-1238";   /* 日本時間(JST)基準。旧buildの"0446"はUTC表記だった */
 try{ document.addEventListener("DOMContentLoaded",function(){ var e=document.getElementById("bld"); if(e) e.textContent=BUILD; }); }catch(e){}
 
 /* ================= 構成（銘柄リストのみ。数値は埋め込まず、開いた時点で取得） ================= */
@@ -298,6 +300,36 @@ const RATEDEFS={
  "IN10Y":"インド10年国債利回り。","BR10Y":"ブラジル10年国債利回り。",
  "KR2Y":"韓国2年国債（국고채）利回り。","KR10Y":"韓国10年国債（국고채）利回り。"
 };
+/* v1700: 正式出典（PDL1.0・ESCB再利用ポリシーの帰属表示要件を満たす） */
+const SRCDEF={
+ "財務省":{name:"財務省「国債金利情報」",url:"www.mof.go.jp/jgbs/reference/interest_rate/",lic:"公共データ利用規約（PDL 1.0）"},
+ "米財務省":{name:"米国財務省 Daily Treasury Par Yield Curve Rates",url:"home.treasury.gov",lic:"米国政府公表データ"},
+ "Bundesbank":{name:"Deutsche Bundesbank BBSIS",url:"www.bundesbank.de/en/statistics",lic:"ESCB統計再利用ポリシー"},
+ "ECB":{name:"欧州中央銀行 ユーロ圏イールドカーブ",url:"data.ecb.europa.eu",lic:"ESCB統計再利用ポリシー"},
+ "DBnomics":{name:"DB.nomics（ECB系列ミラー）",url:"api.db.nomics.world",lic:"ESCB統計再利用ポリシー"},
+ "Eurostat":{name:"Eurostat",url:"ec.europa.eu/eurostat",lic:"CC BY 4.0原則（系列により商用制限あり）"},
+ "WorldBank":{name:"World Bank Open Data（消費者物価上昇率）",url:"data.worldbank.org",lic:"CC BY 4.0"},
+ "東方財富":{name:"東方財富（公開API経由・非公式）",url:"www.eastmoney.com"},
+ "東財API":{name:"東方財富（公開API経由・非公式）",url:"www.eastmoney.com"},
+ "Yahoo":{name:"Yahoo Finance（公開API経由・非公式）",url:"finance.yahoo.com"},
+ "CBOE":{name:"Cboe Global Markets（公開データ）",url:"www.cboe.com"}
+};
+/* 金利ティッカー→主取得源（到着順に依存しない静的な帰属表示用） */
+const SRCTK={"US2Y":"米財務省","US10Y":"米財務省","JP2Y":"財務省","JP10Y":"財務省","DE2Y":"Bundesbank","DE10Y":"Bundesbank",
+ "EU2Y":"ECB","EU10Y":"ECB","CN2Y":"東方財富","CN10Y":"東方財富","GB2Y":"東方財富","GB10Y":"東方財富",
+ "IN2Y":"東方財富","IN10Y":"東方財富","KR2Y":"東方財富","KR10Y":"東方財富","BR10Y":"東方財富"};
+function srcTitle(tk){ try{ const s=SRCDEF[SRCTK[tk]||RSRC[tk]]; return s? s.name+"（"+(s.lic||"非公式公開API・各社の利用規約をご確認ください")+"）" : (RSRC[tk]||"-"); }catch(e){ return (typeof RSRC!=="undefined"&&RSRC[tk])||"-"; } }
+function srcNote(tk){
+  try{
+    if(REALKEYS.indexOf(tk)>=0){
+      const nom=SRCDEF[SRCTK[REALMAP[tk][0]]]||SRCDEF[REALMAP[tk][0]];
+      return " 出典："+(nom? nom.name+"（"+nom.url+"）および":"")+"World Bank Open Data（data.worldbank.org／CC BY 4.0）に基づく「実質＝名目−CPI」の計算値（本サイトによる加工）。";
+    }
+    const d=SRCDEF[SRCTK[tk]];
+    if(d) return " 出典："+d.name+"（"+d.url+"）"+(d.lic?"※"+d.lic:"")+"。月次化は本サイトによる加工。";
+  }catch(e){}
+  return "";
+}
 const NOW=new Date(), YR=NOW.getFullYear(), MO=NOW.getMonth()+1;
 function pad2(n){ return String(n).padStart(2,"0"); }
 const PERIODS=[{id:"ytd",label:"年初来",partial:false}].concat((function(){
@@ -625,13 +657,35 @@ function nearBefore(map,key){
   });
   return best? best[1] : undefined;
 }
+/* v1650: 「当月キー未提供の暫定表示」判定。
+   JGB（日本の金利・実質金利）は当月分が公表されると月次mapに入るが、未公表の間は
+   map に当月キーが無く「取得できません」扱いだった。asof が当月以降なら
+   last（実勢水準）を暫定の当月値として使い、描画側でグレー表示する。 */
+function isProv(tk){
+  const p=PERIODS[CUR];
+  if(!p||!p.partial||p.d1||!p.ym||!p.mm) return false;
+  const m=CDATA[tk];
+  return !!(m && m.map && m.map[p.ym+"-"+pad2(p.mm)]===undefined && m.asof && m.asof.slice(0,7)>=p.ym+"-"+pad2(p.mm) && typeof m.last==="number");
+}
 function valForPage(m,p,tk){
   if(!m) return null;
   if(p.d1){
     /* 値があれば必ず出す（PCC のようにYahoo日足は無いが自前系列から算出できるものを含む）。
        値が無い場合だけ、対象外(D1SKIP)は即「—」、それ以外は期限内「取得中」 */
+    /* v1610: 金利は最新1日も pt（水準差）。d1 は%変化率なので、金利では d1pt を優先し、
+       無ければ d1(%) から pt=last−last/(1+d1/100) に変換して返す
+       （旧: %をそのまま返していたため、ptラベル・±0.3ptスケールのバーに約20倍の値が乗った） */
+    if(isRate(tk)){
+      if(typeof m.d1pt==="number"&&isFinite(m.d1pt)) return +m.d1pt.toFixed(2);
+      if(typeof m.d1==="number"&&isFinite(m.d1)&&typeof m.last==="number"&&m.last>0&&m.d1!==-100)
+        return +(m.last-m.last/(1+m.d1/100)).toFixed(2);
+      return D1SKIP[tk]? null : (D1_FIN? null : undefined);
+    }
     if(typeof m.d1==="number"&&isFinite(m.d1)) return +m.d1.toFixed(2);
-    { const st=D1STORE[tk]; if(st&&typeof st[0]==="number"&&isFinite(st[0])&&(!p.date||st[1]===p.date)) return +st[0].toFixed(2); }
+    /* v1610: D1STORE フォールバックの日付条件を「タブ日付より新しいだけ拒否」に緩和
+       （旧: st[1]===p.date 完全一致。タブ=11/11 に対し米国系データ=11/10 が一致せず
+        空欄になる表示漏れ（最大39銘柄）の第2層を解消する） */
+    { const st=D1STORE[tk]; if(st&&typeof st[0]==="number"&&isFinite(st[0])&&(!p.date||st[1]<=p.date)) return +st[0].toFixed(2); }
     return D1SKIP[tk]? null : (D1_FIN? null : undefined);
   }
   if(p.id==="ytd"){
@@ -655,6 +709,9 @@ function valForPage(m,p,tk){
   if(c===undefined && p.partial){
     const keys=Object.keys(m.map).sort(), lk=keys[keys.length-1];
     if(lk===ck) c=m.last;
+     /* v1650: 当月キー未提供でも asof が当月以降なら last を暫定の当月値にする
+       （前月末基準の暫定値。グレー表示は描画側 isProv で付ける） */
+    else if(m.asof && m.asof.slice(0,7)>=p.ym+"-"+pad2(p.mm) && typeof m.last==="number") c=m.last;
   }
   if(!(b&&c)) return null;
   if(isRate(tk)) return +(c-b).toFixed(2);      /* 金利はpt（水準差） */
@@ -709,7 +766,18 @@ function pageValsInner(){
       let b=m.map[bk];
       if(b===undefined && bk===(YR-1)+"-12") b=decGet(tk);
       if(b===undefined) b=nearBefore(m.map, (p.id==="ytd")? YR+"-01" : p.ym+"-"+pad2(p.mm));
-      out[tk]=(typeof b==="number"&&typeof m.last==="number")? +(m.last-b).toFixed(2) : null; return; }
+      /* v1610: 過去月タブは「当月末−前月末」(c−b)。旧: 被減数が常に last だったため
+         過去月タブなのに最新値基準になり、名目（valForPage の c−b）と不統一だった。
+         当月タブは当月キー未確定のときだけ last を使う（名目と同じ規約）。 */
+            const ckR=(p.id==="ytd")? null : p.ym+"-"+pad2(p.mm);
+      let cR=null;
+      if(ckR){ cR=m.map[ckR]; }
+      /* v1650: JGBなど当月キーが未提供でも asof が当月以降なら last を暫定の当月値にする
+         （前月末基準の暫定値。グレー表示は描画側 isProv で明示する） */
+      if(typeof cR!=="number" && p.partial && typeof b==="number" && m.asof && m.asof.slice(0,7)>=ckR && typeof m.last==="number") cR=m.last;
+      else if(typeof cR!=="number" && p.partial){ const kk=Object.keys(m.map).sort(), lk=kk[kk.length-1]; if(lk===ckR) cR=m.last; }
+      if(ckR===null) cR=m.last;   /* 年初来は「最新値−前年12月末」が定義 */
+      out[tk]=(typeof b==="number"&&typeof cR==="number")? +(cR-b).toFixed(2) : null; return; }
     out[tk]=valForPage(m,p,tk);
   });
   return out;
@@ -831,6 +899,7 @@ function d1Badge(tk){
 }
 function rowHtml(it,V,mx,hasData){
   const n=it[0], tk=it[1], v=V[tk], cd=CDATA[tk];
+  const pv=isProv(tk);   /* v1650: 当月未提供の暫定表示 */
   const U=isRate(tk)?"pt":"%";   /* 金利は結果をptで表示する */
   const dv=it.indexOf("dv")>=0? (cd&&cd.adj===false
       ? "<i class=\"dv\" title=\"調整後終値を取得できなかったため、分配金を含まない価格ベースの値です\">配?</i>"
@@ -846,14 +915,15 @@ function rowHtml(it,V,mx,hasData){
     if(!cd||typeof cd.last!=="number") return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl na\">取得中…</div><div class=\"bar\"></div></div>";
     if(dl===null) return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl na\">基準なし</div><div class=\"bar\"></div></div>";
     const pos=dl>0, w=Math.max(0.6,Math.min(1,Math.abs(dl)/Math.max(1e-9,(typeof mx==="number"&&mx>0?mx:2)))*50).toFixed(1);
-    return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl "+(pos?"p":"n")+"\">"+(dl>0?"+":"")+dl.toFixed(2)+"pt</div>"
+    const pvT=(pv? " title=\"当月確定値は未取得（前月末基準の暫定値）\"":"");
+    return "<div class=\"row\" data-tk=\""+tk+"\">"+nmRR+"<div class=\"vl "+(pos?"p":"n")+(pv?" prov":"")+"\""+pvT+">"+(dl>0?"+":"")+dl.toFixed(2)+"pt</div>"
       +"<div class=\"bar\"><i class=\""+(pos?"p":"n")+"\" style=\"width:"+w+"%;background:"+colorOf(dl*25)+"\"></i></div></div>";
   }
   const tn=/2Y$/.test(tk)? "2年" : (/10Y$/.test(tk)? "10年" : "");
   /* 項目名が既に年限を含む場合（米国2年）は「2年国債」を重ねない */
   const dupT=/国債/.test(n)||/(2年|10年)$/.test(String(n).trim());
   const rt=(it[3]==="rt"&&cd&&typeof cd.last==="number")
-    ? "<i class=\"rt\" title=\"直近の"+tn+"国債利回り（出所："+(RSRC[tk]||"-")+"）\">"+(dupT?"":"<u>"+tn+"国債</u> ")+cd.last.toFixed(2)+"%<b class=\"src\">"+(SRCABBR[RSRC[tk]]||"?")+"</b></i>":"";
+    ? "<i class=\"rt\" title=\"直近の"+tn+"国債利回り（出所："+srcTitle(tk)+"）\">"+(dupT?"":"<u>"+tn+"国債</u> ")+cd.last.toFixed(2)+"%<b class=\"src\">"+(SRCABBR[RSRC[tk]]||"?")+"</b></i>":"";
   void SRCABBR;
   const nm="<div class=\"nm\">"+esc(n)+dv+rt+d1Badge(tk)+"</div>";
   if(v===undefined){
@@ -866,7 +936,7 @@ function rowHtml(it,V,mx,hasData){
   const t=hasData? Math.min(1,Math.abs(v)/(mx||1)) : 0;
   const pos=v>0, w=Math.max(0.6,t*50).toFixed(1);
   return "<div class=\"row\" data-tk=\""+tk+"\">"+nm
-    +"<div class=\"vl "+(pos?"p":"n")+"\">"+fnumU(v,U)+over+"</div>"
+    +"<div class=\"vl "+(pos?"p":"n")+(pv?" prov":"")+"\""+(pv? " title=\"当月確定値は未取得（前月末基準の暫定値）\"":"")+">"+fnumU(v,U)+over+"</div>"
     +"<div class=\"bar\"><i class=\""+(pos?"p":"n")+"\" style=\"width:"+w+"%;background:"+colorOf(U==="pt"? v*10 : v)+"\"></i></div></div>";
 }
 function top5Html(s,V,complete){
@@ -1225,7 +1295,7 @@ async function fetchIdxDirect(tk){
     const q=res.indicators||{};
     const px=(q.quote&&q.quote[0]&&q.quote[0].close)||[];
     const m=monthMap(res.timestamp,px,res.meta&&res.meta.regularMarketTime,(res.meta&&res.meta.exchangeTimezoneName)||"UTC");
-    if(m){ m.adj=false; liveFix(m,res); SRCS["指数API"]=(SRCS["指数API"]||0)+1; OKN++; return m; }
+    if(m){ m.adj=false; if(FXSET[tk]) m.fx=true; liveFix(m,res); SRCS["指数API"]=(SRCS["指数API"]||0)+1; OKN++; return m; }
   }catch(e){}
   return null;
 }
@@ -1314,7 +1384,7 @@ async function prefetchIdx(list){
   await Promise.all(targets.map(async function(tk){
     if(TRIED[tk]) return;
     const m=await fetchIdxDirect(tk);
-    if(m){ CDATA[tk]=m; if(m.asof>ASOF) ASOF=m.asof; n++; }
+    if(m){ CDATA[tk]=m; d1Backfill(tk); if(m.asof>ASOF) ASOF=m.asof; n++; }
   }));
   return n;
 }
@@ -1329,12 +1399,14 @@ async function fetchAdj(tk){
     if(!res||!res.timestamp||!res.timestamp.length) return null;
     if(res.meta&&res.meta.symbol&&String(res.meta.symbol).toUpperCase()!==tk.toUpperCase()) return null;
     const q=res.indicators||{};
-    const adj=q.adjclose&&q.adjclose[0]&&q.adjclose[0].adjclose;
-    const hasAdj=!!(adj&&adj.some(function(x){return typeof x==="number"&&isFinite(x);}));
-    const px=hasAdj? adj : (q.quote&&q.quote[0]&&q.quote[0].close)||[];
+    /* v1620: 月次mapは生値（close）で作る。旧: 配当調整後終値（adjclose）を月次mapに使うと
+       配当落ちごとに水準が下がり、生値基準の他銘柄や日次d1（生値ベース）と基準が混在した
+       （実測: DVY の2025-12基準だけ 137.83=adjclose となり、年初来が +2.76pt 過大表示）。
+       調整後系列は使わず、全銘柄を生値基準に統一する。 */
+    const px=(q.quote&&q.quote[0]&&q.quote[0].close)||[];
     const endTs=res.meta&&res.meta.regularMarketTime;
     const m=monthMap(res.timestamp,px,endTs,(res.meta&&res.meta.exchangeTimezoneName)||"UTC");
-    if(m){ m.adj=hasAdj; liveFix(m,res); const kk=hasAdj?"個別API(配)":"個別API(価格)"; SRCS[kk]=(SRCS[kk]||0)+1; OKN++; }
+    if(m){ m.adj=false; liveFix(m,res); SRCS["個別API(価格)"]=(SRCS["個別API(価格)"]||0)+1; OKN++; }
     return m;
   }catch(e){ return null; }
 }
@@ -1344,7 +1416,8 @@ const STALE_MS=10*60e3;
 function snapStale(){ return !SNAP_TS || (Date.now()-SNAP_TS>STALE_MS); }
 function needsFetch(){
   const st=snapStale();
-  return ALL.filter(function(tk){ return (!CDATA[tk] || st) && !TRIED[tk] && !isRate(tk); });
+  /* v1640: FX は「日足再計算を正」。日足由来の証明（fx 印）がない旧 map は常に取り直す */
+  return ALL.filter(function(tk){ return (!CDATA[tk] || st || (FXSET[tk]&&!CDATA[tk].fx)) && !TRIED[tk] && !isRate(tk); });
 }
 const SNAP_KEY="ytd_snap_v1", SNAP_TTL=7*864e5;
 let SNAP_TS=0;
@@ -1360,7 +1433,7 @@ function loadSnap(){
          （実測：BR10Y が 15.88% のまま、一次情報の10月末 15.51% と 0.37pt ずれた）。
          金利は専用キャッシュ（10分TTL）＋当日取得のみを使う。 */
       if(isRate(tk)) return;
-      if(o&&o.map){ delete o.mstate; CDATA[tk]=o; n++; if(o.asof&&o.asof>ASOF) ASOF=o.asof; }
+      if(o&&o.map){ delete o.mstate; CDATA[tk]=o; d1Backfill(tk); n++; if(o.asof&&o.asof>ASOF) ASOF=o.asof; }
     });
     SNAP_TS=j.ts;
     return n;
@@ -1395,7 +1468,7 @@ function loadRateCache(){
     let n=0;
     Object.keys(j.d||{}).forEach(function(tk){
       const o=j.d[tk];
-      if(o&&o.map){ CDATA[tk]=o; if(o.asof&&o.asof>ASOF) ASOF=o.asof; n++; }
+      if(o&&o.map){ CDATA[tk]=o; d1Backfill(tk); if(o.asof&&o.asof>ASOF) ASOF=o.asof; n++; }
     });
     return n;
   }catch(e){ return 0; }
@@ -1442,8 +1515,34 @@ const DECBASE=(function(){ try{ const j=JSON.parse(localStorage.getItem(DEC_KEY)
 function decPut(tk,lvl){ if(typeof lvl!=="number"||!isFinite(lvl)) return; if(DECBASE[tk]===lvl) return;
   DECBASE[tk]=lvl; try{ localStorage.setItem(DEC_KEY,JSON.stringify(DECBASE)); }catch(e){} }
 function decGet(tk){ const v=DECBASE[tk]; return typeof v==="number"? v : undefined; }
+/* v1650: JGB当月未提供時の暫定表示の仕様を定義欄に明記 */
+try{
+  ["JP2Y","JP10Y","JPRR"].forEach(function(k){
+    const d=(typeof RATEDEFS!=="undefined"&&RATEDEFS[k])? RATEDEFS[k] : (typeof DEFS!=="undefined"? DEFS[k]:null);
+    if(typeof d==="string" && d.indexOf("暫定値")<0){ const t=" JGB当月分が未公表の間は「前月末基準の暫定値」（最新の実勢水準と前月末の差）をグレー表示する。確定値が公表されると通常表示に戻る。";
+      if(typeof RATEDEFS!=="undefined"&&RATEDEFS[k]) RATEDEFS[k]+=t; else if(typeof DEFS!=="undefined"&&DEFS[k]) DEFS[k]+=t; }
+  });
+}catch(e){}
 function harvestDec(tk){ const m=CDATA[tk]; if(!m||!m.map) return; const v=m.map[(YR-1)+"-12"]; if(typeof v==="number") decPut(tk,v); }
 
+/* v1660: map汚染レース対策 — 金利の「確定月」登録簿。
+   財務省CSVなど1次確定ソースが提供した月を記録し（localStorage 永続）、
+   後着の東財ライブ系データがその月を上書きしたり、未確定の当月キーを
+   map に書くことを防ぐ。これにより JGB当月未提供時の暫定表示（isProv）が
+   到着順に関係なく維持される。v1670: 実質金利（REALKEYS 9銘柄）もスコープに追加
+  （mergeRate財務省確定直後のrecomputeReal発火・実質自身の確定月登録・未確定当月キー抑止）。 */
+/* v1690: 確定ソース（官方の日次/月次を提供する源）。setRate/mergeRate の着信で確定月をRCONFIRMに登録する */
+const CONFIRMSRC={"財務省":1,"米財務省":1,"Bundesbank":1,"ECB":1,"DBnomics":1,"Eurostat":1};
+/* v1690: 確定ソースを持つ金利銘柄。kline月次の当月キー書き込みを抑止する（EMのみ銘柄はklineが唯一の当月ソースなので対象外） */
+const RATECONF={"JP2Y":1,"JP10Y":1,"DE2Y":1,"DE10Y":1};   /* 対象は「確定ソースを持ち、かつ東財klineに到達し得る銘柄」のみ。GB/CN/KR/IN/BRはklineが唯一の当月ソース（RATE_PLAN=eastmoneyのみ）なので抑止すると恒久グレー化する。US/EUはkline経路自体に到達しない */
+const RCONFIRM=(function(){ try{ const j=JSON.parse(localStorage.getItem("ytd_rconf_v1")||"{}"); return (j&&typeof j==="object")?j:{}; }catch(e){ return {}; } })();
+function rconfSave(){ try{ localStorage.setItem("ytd_rconf_v1",JSON.stringify(RCONFIRM)); }catch(e){} }
+function rconfMark(tk,map){
+  if(!RCONFIRM[tk]) RCONFIRM[tk]={};
+  let n=0;
+  Object.keys(map||{}).forEach(function(k){ if(!RCONFIRM[tk][k]){ RCONFIRM[tk][k]=1; n++; } });
+  if(n) rconfSave();
+}
 function setRate(tk,obj,src){
   if(!obj) return;
   /* 日次騰落率(d1/d1pt)の引き継ぎ。
@@ -1455,7 +1554,21 @@ function setRate(tk,obj,src){
     if(typeof obj.d1!=="number"&&typeof prev.d1==="number"){ obj.d1=prev.d1; if(prev.d1d) obj.d1d=prev.d1d; }
     if(typeof obj.d1pt!=="number"&&typeof prev.d1pt==="number") obj.d1pt=prev.d1pt;
   }
+  /* v1660: 財務省で確定した月は後着の東財ライブ値で上書きしない。
+     また確定ソースが存在する銘柄では、未確定の当月キーを map に書かせない
+     （書くと暫定表示 isProv が消灯し、暫定値が確定値に見える）。 */
+  if(prev&&prev.map&&obj.map&&RATEKEYS.indexOf(tk)>=0){   /* v1660: 名目金利のみsetRate保護。実質(REALKEYS)は唯一の書き手recomputeRealが保護済みの名目mapから毎回フル再構築するため不要（v1670で実証：setRate保護を実質に適用すると、汚染されていたprev値を「確定月」として復元しrecomputeRealの正しい値を打ち消すため、スコープ外とするのが正しい） */
+    const cf=RCONFIRM[tk];
+    if(cf){
+      const cm=YR+"-"+pad2(MO);
+      if(src!=="財務省"){
+        Object.keys(cf).forEach(function(k){ if(typeof prev.map[k]==="number") obj.map[k]=prev.map[k]; });
+        if(!cf[cm]) delete obj.map[cm];
+      }
+    }
+  }
   CDATA[tk]=obj; if(src) RSRC[tk]=src; if(obj.asof>ASOF) ASOF=obj.asof;
+  if(CONFIRMSRC[src]) rconfMark(tk,obj.map);   /* v1680: setRate経由の確定ソースも確定月を登録。v1690: ECB/DBnomics/Eurostat を追加し確定ソースcoverageを完成 */
   try{ harvestDec(tk); }catch(e){}
   if(REALKEYS.indexOf(tk)<0 && typeof recomputeReal==="function") recomputeReal();
   try{ renderSoon(); }catch(e){}   /* 届いた金利から即表示（全体の完了を待たない） */
@@ -1466,7 +1579,12 @@ function mergeRate(tk,obj,src){
   if(!obj||!obj.map) return;
   const cur=CDATA[tk];
   if(!cur||!cur.map){ setRate(tk,obj,src); return; }
-  Object.keys(obj.map).forEach(function(k){ if(cur.map[k]===undefined) cur.map[k]=obj.map[k]; });
+  /* v1660: 確定ソースの月は優先（既存の東財ライブ値があっても確定値で上書き）。
+     v1690: 確定ソースは CONFIRMSRC（財務省・米財務省・Bundesbank・ECB・DBnomics・Eurostat）に一般化。
+     それ以外の取得元は従来どおり欠けている月だけ補完する。 */
+  const auth=!!CONFIRMSRC[src];   /* v1690: 確定ソースは財務省に限らない（v1660では財務省のみだった） */
+  Object.keys(obj.map).forEach(function(k){ if(auth||cur.map[k]===undefined) cur.map[k]=obj.map[k]; });
+  if(auth){ rconfMark(tk,obj.map); if(src==="財務省") delete cur.map[YR+"-"+pad2(MO)];   /* v1681: 財務省は当月を提供しないため、kline等が先着して書いた未確定当月キーを確定時に除去（到達順非依存で暫定グレーisProvを維持）。v1690: 当月削除は財務省のみ — ECB/DBnomics等は当月の公式値を提供するため削除しない */ try{ if(typeof recomputeReal==="function") recomputeReal(); }catch(e){} }   /* v1670: 財務省確定で名目mapが修正された直後に実質を再計算（mergeRate経由では従来再計算されず実質が東財汚染値のまま残る例＝V2のJPRR -0.374 を解消） */
   if(typeof obj.d1==="number"&&isFinite(obj.d1)){ cur.d1=obj.d1; if(obj.d1d) cur.d1d=obj.d1d; }
   if(typeof obj.d1pt==="number"&&isFinite(obj.d1pt)) cur.d1pt=obj.d1pt;
   if(typeof obj.last==="number" && obj.asof && (!cur.asof || obj.asof>cur.asof)){ cur.last=obj.last; cur.asof=obj.asof; }
@@ -2127,7 +2245,7 @@ function emApply(arr,ref){
     if(!d||!d.f12) return;
     const tk=String(d.f12);
     let m=CDATA[tk];
-    if(!m){ m={map:{},last:null,asof:"",rate:true,rt:true}; CDATA[tk]=m; }
+    if(!m){ m={map:{},last:null,asof:"",rate:true,rt:true}; CDATA[tk]=m; d1Backfill(tk); }
     const px=parseFloat(d.f2), ch=parseFloat(d.f3), pv=parseFloat(d.f18);
     if(isFinite(px)&&px>0) m.last=px;
     if(!isFinite(ch)) return;
@@ -2138,6 +2256,14 @@ function emApply(arr,ref){
        そのまま入れており、実際は11/6の公表値でも11/10として扱われていた。 */
     const dd=emYmd(parseFloat(d.f124),EMTZ[tk]);
     if(dd) m.d1d=dd; else delete m.d1d;
+    /* v1630: asof/last/map の単一ソース化。last を東財ライブで更新した場合、
+       asof も同じ出所（f124由来の dd）に揃える。旧: 財務省CSVが先に setRate で書いた
+       asof（例: 10/30）が残留し、「last=11/11ライブ vs asof=10/30」の混在表示や、
+       年初来タブの混在基準になっていた（JPRR は recomputeReal が nom.asof を
+       引き継ぐため名目の修正で連動して解消する）。
+       月次mapは書き換えない。過去月は財務省の確定値が正、当月は valForPage の
+       partial フォールバック（m.last）が使うため map を触らず単一ソースを保つ。 */
+    if(isFinite(px)&&px>0&&dd) m.asof=dd;
     /* 更新時刻が直近30分以内なら「場中（未確定）」とみなす。
        東財のクォートは取引時間中に動くため、確定値と同じ表示にすると誤解を生む。
        市場が閉じていれば f124 が古いままなので自動的に日付のみに戻る。 */
@@ -2311,8 +2437,13 @@ function recomputeReal(){
   REALKEYS.forEach(function(rk){
     const m=REALMAP[rk], nom=CDATA[m[0]], inf=INF[m[1]];
     if(!nom||!inf||typeof nom.last!=="number") return;
-    const map={};
+    const cf=RCONFIRM[m[0]], cm=YR+"-"+pad2(MO), map={};
     Object.keys(nom.map||{}).forEach(function(k){ map[k]=+(nom.map[k]-inf.v).toFixed(3); });
+    /* v1670: 実質金利をRCONFIRM保護スコープに追加。名目の確定月を実質にも登録し、
+       未確定の当月キーは実質のmapにも書かない（名目と実質でisProvの点灯を揃える）。
+       確定済み当月は登録が先のためsetRate保護でも削除されない。 */
+    if(cf&&!cf[cm]) delete map[cm];
+    if(cf&&Object.keys(cf).length) rconfMark(rk,cf);
     setRate(rk,{map:map,last:+(nom.last-inf.v).toFixed(3),asof:nom.asof,rate:true,rr:true,inf:inf.v,infY:inf.y,
       d1:(function(){ const pt=(typeof nom.d1pt==="number"&&isFinite(nom.d1pt))? nom.d1pt : null; if(pt===null) return nom.d1; const prev=(nom.last-inf.v)-pt; return (prev>0.02)? +((pt/prev)*100).toFixed(2) : nom.d1; })(),d1pt:(typeof nom.d1pt==="number")? nom.d1pt : undefined},"実質=名目−CPI");
   });
@@ -2419,7 +2550,7 @@ async function fetchRates(prog){
         const bm=base[tk]||{}, map={};
         Object.keys(bm).forEach(function(k){ map[k]=bm[k]; });
         const d=new Date();
-        if(!(YR+"-"+pad2(MO) in map)) map[YR+"-"+pad2(MO)]=batch[tk];   /* 基準月は上書きしない */
+        if(!(YR+"-"+pad2(MO) in map) && RATEKEYS.indexOf(tk)<0) map[YR+"-"+pad2(MO)]=batch[tk];   /* 基準月は上書きしない（v1660: 確定ソースがある銘柄は当月も書かない。v1680: 名目金利は初回訪問時（RCONFIRM未登録）でも当月キーを書かない — 一括クォートの当月値が財務省mergeRate確定後に残留しisProvが消灯する初回訪問レースを源で遮断。kline月次経路が書く当月キーはmergeRate財務省確定時にv1681で除去され、EMのみ銘柄（確定ソースなし）はklineの当月をそのまま表示 */
         if(hasBase({map:map})){ setRate(tk,{map:map,last:batch[tk],asof:d.toISOString().slice(0,10),rate:true},"東方財富"); }
         prog();
       });
@@ -2445,7 +2576,7 @@ async function fetchRates(prog){
           const tk=need[i++];
           if(CDATA[tk] && hasBase(CDATA[tk])){ continue; }
           const m=await fetchEmRetry(tk);
-          if(m){ setRate(tk,m,"東方財富"); saveEmBase(tk,m.map); SRCS["東財API"]=(SRCS["東財API"]||0)+1; }
+          if(m){ if(RATECONF[tk]&&m.map) delete m.map[YR+"-"+pad2(MO)];   /* v1690: 確定ソースを持つ金利はklineの当月を書かない — 財務省等の確定ソースが遅延しても当月キーが残留せず、暫定グレーisProvの過渡期フリッカーを解消。EMのみ銘柄（CN/KR/IN/BR等・確定ソースなし）は従来どおりklineの当月を使う */ setRate(tk,m,"東方財富"); saveEmBase(tk,m.map); SRCS["東財API"]=(SRCS["東財API"]||0)+1; }
           prog();
         }
       }
@@ -2474,7 +2605,7 @@ function watchdog(ms){
 }
 async function ensureData(){
   if(FETCHING) return;
-  const missing=needsFetch(), rmissing=needsRates();
+  let missing=needsFetch(), rmissing=needsRates();
   const adjNeed=ADJ.filter(function(tk){ return (!CDATA[tk]||!CDATA[tk].adj) && !TRIED[tk]; });
   if(!missing.length && !rmissing.length && !adjNeed.length){ report(false); return; }
   FETCHING=true; LASTTRY=Date.now();
@@ -2493,8 +2624,12 @@ async function ensureData(){
     };
     setStatus("","最新データを取得しています… <b>"+(total-missing.length-rmissing.length)+"/"+total+"</b>",(total-missing.length-rmissing.length)/total);
     /* 金利・一括API（4チャンク）・「配」印の個別取得をすべて同時に発射し、1波で完了させる */
+    /* v1640: FX は Yahoo 月次バーに依存させない（2026-10 バー欠損などの実測あり）。
+       日足 chart API からの再計算を正とし、専用ワーカーで取得する */
+    const fxMiss=missing.filter(function(tk){ return FXSET[tk]; });
+    missing=missing.filter(function(tk){ return !FXSET[tk]; });
     const chunks=[]; for(let i=0;i<missing.length;i+=CHUNK) chunks.push(missing.slice(i,i+CHUNK));
-    let ci=0, ai=0, okChunks=0;
+    let ci=0, ai=0, fi=0, okChunks=0;
     async function wc(){
       while(ci<chunks.length){
         /* 期限内でも、残りチャンクが多いときは最後まで走らせる（1.6秒時代の打ち切りで
@@ -2505,7 +2640,8 @@ async function ensureData(){
           okChunks++;
           Object.keys(got).forEach(function(tk){
             if(CDATA[tk]&&CDATA[tk].adj) return;   /* 調整後終値を無調整値で上書きしない */
-            CDATA[tk]=got[tk]; if(got[tk].asof>ASOF){ ASOF=got[tk].asof; } if(got[tk].time) ASOFT=got[tk].time;
+            if(FXSET[tk]) return;   /* v1640: FX は日足再計算のみを正とする（月次バー由来は破棄） */
+            CDATA[tk]=got[tk]; d1Backfill(tk); if(got[tk].asof>ASOF){ ASOF=got[tk].asof; } if(got[tk].time) ASOFT=got[tk].time;
           });
         }
         prog();
@@ -2515,7 +2651,7 @@ async function ensureData(){
       while(ai<adjNeed.length){
         if(Date.now()>DL) return;
         const tk=adjNeed[ai++], m=await fetchAdj(tk);
-        if(m){ CDATA[tk]=m; if(m.asof>ASOF){ ASOF=m.asof; } if(m.time) ASOFT=m.time; }
+        if(m){ CDATA[tk]=m; d1Backfill(tk); if(m.asof>ASOF){ ASOF=m.asof; } if(m.time) ASOFT=m.time; }
         prog();
       }
     }
@@ -2533,7 +2669,15 @@ async function ensureData(){
         },1200);
       }
     }).catch(function(){});
-    const wave=[wc(),wc(),wc(),wc(),wa(),wa(),wa(),wa(),wa(),wa(),wa(),wa()];
+    async function wf(){
+      while(fi<fxMiss.length){
+        if(Date.now()>DL) return;
+        const tk=fxMiss[fi++], m=await fetchIdxDirect(tk);
+        if(m){ CDATA[tk]=m; d1Backfill(tk); if(m.asof>ASOF){ ASOF=m.asof; } }
+        prog();
+      }
+    }
+    const wave=[wc(),wc(),wc(),wc(),wa(),wa(),wa(),wa(),wa(),wa(),wa(),wa(),wf(),wf()];
     await Promise.race([Promise.all(wave), new Promise(function(res){ setTimeout(res,GLOBAL_DEADLINE); })]);
   render(false);
     /* 「配」印で調整後終値が取れなかった要素を再取得（競合・取りこぼし対策） */
@@ -2545,7 +2689,7 @@ async function ensureData(){
         while(ni<need.length){
           if(Date.now()>DL) return;
           const tk=need[ni++], m=await fetchAdj(tk);
-          if(m&&m.adj){ CDATA[tk]=m; if(m.asof>ASOF){ ASOF=m.asof; } if(m.time) ASOFT=m.time; }
+          if(m&&m.adj){ CDATA[tk]=m; d1Backfill(tk); if(m.asof>ASOF){ ASOF=m.asof; } if(m.time) ASOFT=m.time; }
           prog();
         }
       }
@@ -2553,12 +2697,12 @@ async function ensureData(){
     }
     /* 失敗した銘柄を最大4件だけ個別補完（一括APIが全滅した場合は行わない） */
     if(okChunks>0){
-      const rest=(Date.now()>DL)? [] : ALL.filter(function(tk){ return !CDATA[tk]&&!TRIED[tk]&&ADJ.indexOf(tk)<0; }).slice(0,4);
+      const rest=(Date.now()>DL)? [] : ALL.filter(function(tk){ return !CDATA[tk]&&!TRIED[tk]&&ADJ.indexOf(tk)<0&&!FXSET[tk]; }).slice(0,4);
       let ri=0;
       async function wr(){
         while(ri<rest.length){
           const tk=rest[ri++], m=await fetchAdj(tk);
-          if(m){ CDATA[tk]=m; if(m.asof>ASOF){ ASOF=m.asof; } if(m.time) ASOFT=m.time; }
+          if(m){ CDATA[tk]=m; d1Backfill(tk); if(m.asof>ASOF){ ASOF=m.asof; } if(m.time) ASOFT=m.time; }
           prog();
         }
       }
@@ -2673,7 +2817,7 @@ document.getElementById("defs").innerHTML=SECTIONS.map(function(s){
    + s.items.map(function(it){
        if(isSub(it)) return "<dt class=\"subd\">"+esc(it[0])+"</dt>";
        return "<dt>"+esc(it[0])+"（"+esc(it[1])+"）"+(it[3]==="dv"?" 配":"")+"</dt><dd>"
-         +(NAMES[it[1]]? "<em>"+esc(NAMES[it[1]])+"</em><br>":"")+esc(DEFS[it[1]]||RATEDEFS[it[1]]||"（説明未登録）")+"</dd>";
+         +(NAMES[it[1]]? "<em>"+esc(NAMES[it[1]])+"</em><br>":"")+esc(DEFS[it[1]]||RATEDEFS[it[1]]||"（説明未登録）")+srcNote(it[1])+"</dd>";   /* v1700: 正式出典を定義欄に付記 */
      }).join("")+"</dl></details>";
 }).join("");
 /* ===== 月次推移グラフ（行をタップ／クリック） =====
@@ -3123,6 +3267,11 @@ let D1_TRIES={};
 /* 日次騰落率の独立ストア。スナップショットが失効していても当日分を即再表示できるよう、
    CDATA とは別に保持する（毎回フル取得していたのが「最新1日が遅い」主因）。 */
 const D1STORE={};
+function d1Backfill(tk){ /* v1610: 月次パスが CDATA を丸ごと置換しても d1 を失わない
+  （d1Put が CDATA 未生成時に走った場合の表示漏れ＝空欄レースの第1層を解消する） */
+  const cd=CDATA[tk], st=D1STORE[tk];
+  if(cd&&st&&typeof st[0]==="number"&&isFinite(st[0])&&typeof cd.d1!=="number"){ cd.d1=st[0]; if(st[1]) cd.d1d=st[1]; }
+}
 /* 最新1日は月次(1.6秒)とは別枠の期限を持つ。期限内は「取得中」、超過後は「取得できません」 */
 function d1Left(){ return D1_FIN? 0 : Math.max(0,Math.ceil((D1_DL-Date.now())/1000)); }
 /* 取得済みの日次騰落率をlocalStorageへ保存（次回起動時に通信ゼロで復元） */
@@ -3545,6 +3694,7 @@ function wRender(){
         const z=Math.abs(v)<0.005;                 /* 実質ゼロ（変化なし） */
         txt=z? '±0.00'+u : ((v>0?'+':'')+v.toFixed(2)+u);
         cls=z? 'z' : (v>0?'p':'n');
+        if(isProv(tk)){ cls+=' prov'; txt='<span class="prov" title="当月確定値は未取得（前月末基準の暫定値）">'+txt+'</span>'; }   /* v1650 */
         const dom=SC[i]||100;
         const t=Math.min(1,Math.abs(v)/dom);
         const w=Math.max(2.2, t*50).toFixed(1);   /* 小さくても見えるよう最小幅2.2% */
@@ -3578,7 +3728,7 @@ const WDEFS_HTML=(function(){
         + s.items.map(function(it){
             const nm=NAMES[it[1]]? '<em>'+esc(NAMES[it[1]])+'</em>' : '';
             return '<dt>'+esc(it[0])+'<span class="tk">'+esc(it[1])+'</span></dt><dd>'+nm
-              +esc(DEFS[it[1]]||RATEDEFS[it[1]]||'（説明未登録）')+'</dd>';
+              +esc(DEFS[it[1]]||RATEDEFS[it[1]]||'（説明未登録）')+srcNote(it[1])+'</dd>';   /* v1700: 正式出典を定義欄に付記 */
           }).join('')+'</dl></details>';
      }).join('');
 })();
